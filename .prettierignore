@@ -1,0 +1,15 @@
+# Phase 0: format only new/tooling files. The legacy 2012 tree is left untouched
+# to avoid noisy diffs; it will be reformatted as modules migrate in later phases.
+node_modules
+client-build
+dist
+client
+server
+shared
+tools
+bin
+package-lock.json
+**/*.min.js
+
+# Reference docs — keep authored formatting.
+*.md
