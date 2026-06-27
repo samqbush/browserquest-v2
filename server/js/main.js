@@ -1,6 +1,7 @@
 
 var fs = require('fs'),
-    Metrics = require('./metrics');
+    Metrics = require('./metrics'),
+    PlayerStore = require('./playerstore');
 
 
 function main(config) {
@@ -9,6 +10,8 @@ function main(config) {
         Log = require('./log'),
         server = new ws.MultiVersionWebsocketServer(config.port),
         metrics = new Metrics(config),
+        store = PlayerStore.createStore(config),
+        sessions = new PlayerStore.SessionRegistry(),
         worlds = [],
         lastTotalPlayers = 0,
         checkPopulationInterval = setInterval(function() {
@@ -31,6 +34,9 @@ function main(config) {
     };
     
     log.info("Starting BrowserQuest game server...");
+    if(store) {
+        log.info("Player persistence enabled (driver: "+ (config.persistence && config.persistence.driver || "sqlite") +").");
+    }
     
     server.onConnect(function(connection) {
         var world, // the one in which the player will be spawned
@@ -72,7 +78,7 @@ function main(config) {
     };
 
     for(var i = 0; i < config.nb_worlds; i += 1) {
-        var world = new WorldServer('world'+ (i+1), config.nb_players_per_world, server);
+        var world = new WorldServer('world'+ (i+1), config.nb_players_per_world, server, store, sessions);
         world.run(config.map_filepath);
         worlds.push(world);
         world.onPlayerAdded(onPopulationChange);
@@ -93,6 +99,15 @@ function main(config) {
     process.on('uncaughtException', function (e) {
         log.error('uncaughtException: ' + e);
     });
+
+    var shutdown = function() {
+        if(store) {
+            try { store.close(); } catch(e) { /* best-effort */ }
+        }
+        process.exit(0);
+    };
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
 }
 
 function getWorldDistribution(worlds) {

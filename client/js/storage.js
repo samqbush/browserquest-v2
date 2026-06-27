@@ -25,7 +25,8 @@ import Class from './lib/class.js';
                     totalKills: 0,
                     totalDmg: 0,
                     totalRevives: 0
-                }
+                },
+                token: null
             };
         },
     
@@ -81,6 +82,16 @@ import Class from './lib/class.js';
             this.setPlayerImage(img);
             this.setPlayerArmor(armor);
             this.setPlayerWeapon(weapon);
+        },
+
+        // Opaque reconnect token issued by the server (Phase 4 persistence).
+        getToken: function() {
+            return this.data.token || null;
+        },
+
+        setToken: function(token) {
+            this.data.token = token;
+            this.save();
         },
     
         // Achievements

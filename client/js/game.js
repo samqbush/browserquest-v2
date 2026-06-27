@@ -783,7 +783,7 @@ import Types from 'shared/js/gametypes.js';
                 }
             });
         
-            this.client.onWelcome(function(id, name, x, y, hp) {
+            this.client.onWelcome(function(id, name, x, y, hp, orientation, armor, weapon, token) {
                 log.info("Received player ID from server : "+ id);
                 self.player.id = id;
                 self.playerId = id;
@@ -792,6 +792,30 @@ import Types from 'shared/js/gametypes.js';
                 self.player.name = name;
                 self.player.setGridPosition(x, y);
                 self.player.setMaxHitPoints(hp);
+
+                // Apply server-authoritative gear restored from persistence so
+                // the local player matches what other players see via SPAWN.
+                if(typeof armor === 'number') {
+                    var armorName = Types.getKindAsString(armor);
+                    if(armorName && self.sprites[armorName]) {
+                        self.player.setSpriteName(armorName);
+                        self.player.setSprite(self.sprites[armorName]);
+                    }
+                }
+                if(typeof weapon === 'number') {
+                    var weaponName = Types.getKindAsString(weapon);
+                    if(weaponName) {
+                        self.player.setWeaponName(weaponName);
+                    }
+                }
+                if(orientation === Types.Orientations.UP || orientation === Types.Orientations.DOWN
+                    || orientation === Types.Orientations.LEFT || orientation === Types.Orientations.RIGHT) {
+                    self.player.orientation = orientation;
+                }
+                // Persist the opaque reconnect token issued/echoed by the server.
+                if(token && self.storage) {
+                    self.storage.setToken(token);
+                }
             
                 self.updateBars();
                 self.resetCamera();
@@ -1529,7 +1553,8 @@ import Types from 'shared/js/gametypes.js';
          * @see GameClient.sendHello
          */
         sendHello: function() {
-            this.client.sendHello(this.player);
+            var token = this.storage ? this.storage.getToken() : null;
+            this.client.sendHello(this.player, token);
         },
 
         /**

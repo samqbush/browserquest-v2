@@ -385,28 +385,56 @@ smoke test green in CI alongside the existing Vitest suite.
 
 ---
 
-## Phase 4: Optional persistence (T-shirt size: L)  `[DECISION NEEDED]`
+## Phase 4: Optional persistence (T-shirt size: L) — ✅ COMPLETE
 
 **Goal:** Make player progress survive reconnects.
 **Prerequisites:** Phase 1; stakeholder decision on product direction.
 **Duration estimate:** 2-4 sprints (only if greenlit).
 
+### Decisions made (resolving the `[DECISION NEEDED]` flags)
+- **Product direction:** persistence added as an **opt-in** feature; the game
+  stays a demo by default (`persistence_enabled: false`).
+- **Backend:** SQLite via `better-sqlite3` (file-based, zero-infra; WAL +
+  `busy_timeout`, prepared statements). In-memory store available as a test
+  double / `driver: "memory"` dev mode — **not** the disabled default.
+- **Identity:** server-issued **anonymous opaque bearer token**
+  (`crypto.randomUUID`), stored client-side in `localStorage`, presented on
+  reconnect. No accounts/auth (documented demo-grade trust model).
+- **Persisted state:** `name`, equipped `armor`/`weapon`, position, orientation,
+  last checkpoint id. **Achievements/inventory were descoped** — achievements
+  remain client-side (`client/js/storage.js`) and there is no server inventory
+  beyond equipped gear.
+
 ### Tasks
-| ID | Task | Component | Blocked by |
-|----|------|-----------|------------|
-| 4.1 | Define `PlayerStore` interface + in-memory default | server | — |
-| 4.2 | Wire load/save into `player.js` enter/leave | `player.js`/`worldserver.js` | 4.1 |
-| 4.3 | Implement Redis or Postgres store + migration/backfill plan | server | 4.1 |
-| 4.4 | Dual-run (in-memory + store) behind a feature flag | server | 4.2-4.3 |
+| ID | Task | Component | Status |
+|----|------|-----------|--------|
+| 4.1 | `PlayerStore` interface + in-memory default + `SessionRegistry` | `server/js/playerstore.js` | ✅ |
+| 4.2 | Load on HELLO / save on exit, gear, checkpoint, teleport, debounced move | `player.js`/`worldserver.js` | ✅ |
+| 4.3 | SQLite store (`better-sqlite3`, WAL); no migration needed (fresh store) | `server/js/playerstore.js` | ✅ |
+| 4.4 | Dual-run behind `persistence_enabled` flag (default off) | `main.js`/`config.json` | ✅ |
+
+### Protocol / identity (append-only, lockstep-safe)
+- HELLO accepts an **optional** 4th string token (relaxed unconditionally in
+  `format.js`); WELCOME **appends** `orientation, armor, weapon, token` only when
+  persistence is on, so the flag-off path is byte-for-byte unchanged.
+- Concurrency fenced by a process-wide token→session registry: a duplicate-token
+  login supersedes the older session, and a superseded session's save is ignored
+  (no stale rollback). Persisted data is validated as untrusted on load.
 
 ### Risks & Mitigations
 - **Risk:** Persistence introduces cheating/identity needs (no auth today). →
-  **Mitigation:** scope a minimal account/token model as a sub-decision; keep
-  anonymous play as default.
+  **Mitigation:** opaque tokens are bearer credentials (documented), anonymous
+  play remains the default, tokens are never logged raw.
 
 ### Verification & exit criteria (Definition of Done)
-- [ ] With a store configured, name/achievements/inventory persist across
-      reconnect; default in-memory path unchanged.
+- [x] With a store configured, name/gear/position/checkpoint persist across
+      reconnect; default (flag-off) in-memory path unchanged.
+- [x] `npm run lint` (0 errors) and `npm test` green (incl.
+      `test/playerstore.test.js`, `test/persistence-reconnect.test.js`,
+      relaxed `test/format-check.test.js`); `npm run test:e2e` + contract tests
+      green. Verified live: token issued on first connect restores name/gear/
+      position on reconnect; flag-off server still accepts a token-carrying
+      HELLO and returns the original 6-field WELCOME.
 
 ---
 
@@ -450,17 +478,19 @@ smoke test green in CI alongside the existing Vitest suite.
 
 ## 7. Open questions / decisions needed
 
-- `[DECISION NEEDED]` **Product direction:** stays a demo, or becomes a
-  persistent game? Gates Phase 4 entirely.
-- `[DECISION NEEDED]` **Persistence backend** if Phase 4 proceeds: Redis
-  (simple, ephemeral-friendly) vs. Postgres (durable, relational).
-- `[DECISION NEEDED]` **Accounts/auth:** persistence implies identity. Minimal
-  anonymous tokens, or real accounts?
+- ✅ **RESOLVED (Phase 4)** **Product direction:** persistence shipped as an
+  opt-in feature (`persistence_enabled`, default off); stays a demo by default.
+- ✅ **RESOLVED (Phase 4)** **Persistence backend:** SQLite (`better-sqlite3`,
+  file-based, zero-infra) — chosen over Redis/Postgres for the single-host demo.
+- ✅ **RESOLVED (Phase 4)** **Accounts/auth:** anonymous opaque bearer tokens
+  (no real accounts); anonymous play remains the default.
 - `[DECISION NEEDED]` **TypeScript:** adopt incrementally (Phase 5) or stay JS +
   JSDoc?
 - `[DECISION NEEDED]` **Multi-host topology:** is the `game_servers` memcached
   fan-out (`metrics.js:31,40`) still a target, or is single-host sufficient? This
-  decides whether Phase 3.4 (Redis) is needed.
+  decides whether Phase 3.4 (Redis) is needed. (The Phase 4 SQLite store and
+  in-process session registry assume single-host; multi-host would need a shared
+  store + registry.)
 - **Map tooling** (`tools/maps`, OSX/Python/`lxml`): out of scope for the core
   modernization, but flagged — it's slow and brittle
   (`tools/maps/README.md:3`). Modernize only if active map editing is required.
