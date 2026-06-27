@@ -7,6 +7,10 @@ unchanged; work is upgrade-and-swap, not rewrite. See `MODERNIZATION_PLAN.md`
 for the phase roadmap, `ARCHITECTURE.md` for the audited current state, and
 `BASELINE.md` for the known-good toolchain baseline.
 
+The only git remote is `origin` (`samqbush/browserquest-v2`). The original
+Mozilla repo is **archived** — do not add it (or any other) as an `upstream`
+remote.
+
 ## Commands
 
 | Action | Command |
