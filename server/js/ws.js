@@ -3,7 +3,6 @@ var cls = require("./lib/class"),
     WebSocketServer = require('ws').Server,
     http = require('http'),
     Utils = require('./utils'),
-    _ = require('underscore'),
     WS = {};
 
 module.exports = WS;
@@ -30,7 +29,7 @@ var Server = cls.Class.extend({
     },
     
     forEachConnection: function(callback) {
-        _.each(this._connections, callback);
+        Object.values(this._connections).forEach(callback);
     },
     
     addConnection: function(connection) {
@@ -109,6 +108,22 @@ WS.MultiVersionWebsocketServer = Server.extend({
                         response.write(self.status_callback());
                         break;
                     }
+                    response.writeHead(404);
+                    break;
+                case '/metrics':
+                    if(self.metrics_callback) {
+                        Promise.resolve(self.metrics_callback()).then(function(result) {
+                            response.writeHead(200, { 'Content-Type': self.metrics_content_type || 'text/plain' });
+                            response.end(result);
+                        }).catch(function(error) {
+                            log.error("Error generating metrics: " + error);
+                            response.writeHead(500);
+                            response.end();
+                        });
+                        return;
+                    }
+                    response.writeHead(404);
+                    break;
                 default:
                     response.writeHead(404);
             }
@@ -154,6 +169,11 @@ WS.MultiVersionWebsocketServer = Server.extend({
     
     onRequestStatus: function(status_callback) {
         this.status_callback = status_callback;
+    },
+    
+    onRequestMetrics: function(metrics_callback, contentType) {
+        this.metrics_callback = metrics_callback;
+        this.metrics_content_type = contentType;
     },
     
     close: function(callback) {

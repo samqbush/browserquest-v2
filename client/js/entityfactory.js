@@ -3,7 +3,6 @@ import Items from './items.js';
 import NPCs from './npcs.js';
 import Warrior from './warrior.js';
 import Chest from './chest.js';
-import _ from 'underscore';
 import log from './lib/log.js';
 import Types from 'shared/js/gametypes.js';
 
@@ -15,7 +14,7 @@ import Types from 'shared/js/gametypes.js';
             return;
         }
     
-        if(!_.isFunction(EntityFactory.builders[kind])) {
+        if(typeof EntityFactory.builders[kind] !== 'function') {
             throw Error(kind + " is not a valid Entity type");
         }
     

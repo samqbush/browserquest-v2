@@ -1,6 +1,5 @@
 
 var cls = require("./lib/class"),
-    _ = require("underscore"),
     Messages = require("./message"),
     Properties = require("./properties"),
     Types = require("../../shared/js/gametypes");
@@ -35,14 +34,14 @@ module.exports = Mob = Character.extend({
     },
     
     hates: function(playerId) {
-        return _.any(this.hatelist, function(obj) { 
+        return this.hatelist.some(function(obj) { 
             return obj.id === playerId; 
         });
     },
     
     increaseHateFor: function(playerId, points) {
         if(this.hates(playerId)) {
-            _.detect(this.hatelist, function(obj) {
+            this.hatelist.find(function(obj) {
                 return obj.id === playerId;
             }).hate += points;
         }
@@ -66,8 +65,8 @@ module.exports = Mob = Character.extend({
     
     getHatedPlayerId: function(hateRank) {
         var i, playerId,
-            sorted = _.sortBy(this.hatelist, function(obj) { return obj.hate; }),
-            size = _.size(this.hatelist);
+            sorted = this.hatelist.slice().sort(function(a, b) { return a.hate - b.hate; }),
+            size = this.hatelist.length;
         
         if(hateRank && hateRank <= size) {
             i = size - hateRank;
@@ -83,7 +82,7 @@ module.exports = Mob = Character.extend({
     },
     
     forgetPlayer: function(playerId, duration) {
-        this.hatelist = _.reject(this.hatelist, function(obj) { return obj.id === playerId; });
+        this.hatelist = this.hatelist.filter(function(obj) { return obj.id !== playerId; });
         
         if(this.hatelist.length === 0) {
             this.returnToSpawningPosition(duration);

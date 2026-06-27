@@ -1,76 +1,73 @@
 
 var cls = require("./lib/class"),
-    _ = require("underscore");
+    client = require("prom-client");
 
-module.exports = Metrics = Class.extend({
+// Modern, single-host metrics backed by `prom-client`. Replaces the old
+// memcached-based multi-host population counter. Player counts are derived
+// locally from the in-process worlds and exposed as a scrapeable Prometheus
+// `/metrics` endpoint. Each instance owns its own registry so the module can
+// be instantiated more than once (e.g. in tests) without "metric already
+// registered" collisions on a shared global registry.
+module.exports = Metrics = cls.Class.extend({
     init: function(config) {
-        var self = this;
-        
         this.config = config;
-        this.client = new (require("memcache")).Client(config.memcached_port, config.memcached_host);
-        this.client.connect();
-        
-        this.isReady = false;
-        
-        this.client.on('connect', function() {
-            log.info("Metrics enabled: memcached client connected to "+config.memcached_host+":"+config.memcached_port);
-            self.isReady = true;
-            if(self.ready_callback) {
-                self.ready_callback();
-            }
+        this.isReady = true;
+
+        this.registry = new client.Registry();
+
+        this.playerCountGauge = new client.Gauge({
+            name: 'bq_players_total',
+            help: 'Total number of connected players across all worlds on this server.',
+            registers: [this.registry]
+        });
+        this.worldPlayerCountGauge = new client.Gauge({
+            name: 'bq_world_players',
+            help: 'Number of connected players in a given world.',
+            labelNames: ['world'],
+            registers: [this.registry]
+        });
+        this.worldCountGauge = new client.Gauge({
+            name: 'bq_worlds_total',
+            help: 'Number of game worlds hosted on this server.',
+            registers: [this.registry]
         });
     },
-    
-    ready: function(callback) {
-        this.ready_callback = callback;
-    },
-    
-    updatePlayerCounters: function(worlds, updatedCallback) {
-        var self = this,
-            config = this.config,
-            numServers = _.size(config.game_servers),
-            playerCount = _.reduce(worlds, function(sum, world) { return sum + world.playerCount; }, 0);
-        
-        if(this.isReady) {
-            // Set the number of players on this server
-            this.client.set('player_count_'+config.server_name, playerCount, function() {
-                var total_players = 0;
-                
-                // Recalculate the total number of players and set it
-                _.each(config.game_servers, function(server) {
-                    self.client.get('player_count_'+server.name, function(error, result) {
-                        var count = result ? parseInt(result) : 0;
 
-                        total_players += count;
-                        numServers -= 1;
-                        if(numServers === 0) {
-                            self.client.set('total_players', total_players, function() {
-                                if(updatedCallback) {
-                                    updatedCallback(total_players);
-                                }
-                            });
-                        }
-                    });
-                });
-            });
-        } else {
-            log.error("Memcached client not connected");
+    ready: function(callback) {
+        if(callback) {
+            callback();
         }
     },
-    
+
+    getTotalPlayers: function(worlds) {
+        return worlds.reduce(function(sum, world) { return sum + world.playerCount; }, 0);
+    },
+
+    updatePlayerCounters: function(worlds, updatedCallback) {
+        var total = this.getTotalPlayers(worlds);
+
+        this.playerCountGauge.set(total);
+        this.worldCountGauge.set(worlds.length);
+        this.updateWorldDistribution(worlds);
+
+        if(updatedCallback) {
+            updatedCallback(total);
+        }
+    },
+
     updateWorldDistribution: function(worlds) {
-        this.client.set('world_distribution_'+this.config.server_name, worlds);
-    },
-    
-    getOpenWorldCount: function(callback) {
-        this.client.get('world_count_'+this.config.server_name, function(error, result) {
-            callback(result);
+        var gauge = this.worldPlayerCountGauge;
+        worlds.forEach(function(world) {
+            gauge.set({ world: world.id }, world.playerCount);
         });
     },
-    
-    getTotalPlayers: function(callback) {
-        this.client.get('total_players', function(error, result) {
-            callback(result);
-        });
+
+    // Returns a Promise<string> of the Prometheus exposition-format metrics.
+    getMetrics: function() {
+        return this.registry.metrics();
+    },
+
+    getContentType: function() {
+        return this.registry.contentType;
     }
 });

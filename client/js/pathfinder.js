@@ -1,5 +1,4 @@
 import AStar from './lib/astar.js';
-import _ from 'underscore';
 import Class from './lib/class.js';
 
     var Pathfinder = Class.extend({
@@ -81,7 +80,7 @@ import Class from './lib/class.js';
             var self = this,
                 x, y, g;
 
-            _.each(this.ignored, function(entity) {
+            this.ignored.forEach(function(entity) {
                 x = entity.isMoving() ? entity.nextGridX : entity.gridX;
                 y = entity.isMoving() ? entity.nextGridY : entity.gridY;
 

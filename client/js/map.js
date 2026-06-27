@@ -1,6 +1,5 @@
 import $ from 'jquery';
 import Area from './area.js';
-import _ from 'underscore';
 import Class from './lib/class.js';
 import log from './lib/log.js';
 import Types from 'shared/js/gametypes.js';
@@ -99,7 +98,7 @@ import Types from 'shared/js/gametypes.js';
             var doors = {},
                 self = this;
 
-            _.each(map.doors, function(door) {
+            (map.doors || []).forEach(function(door) {
                 var o;
                 
                 switch(door.to) {
@@ -205,12 +204,12 @@ import Types from 'shared/js/gametypes.js';
                 }
             }
 
-            _.each(this.collisions, function(tileIndex) {
+            (this.collisions || []).forEach(function(tileIndex) {
                 var pos = self.tileIndexToGridPosition(tileIndex+1);
                 self.grid[pos.y][pos.x] = 1;
             });
 
-            _.each(this.blocking, function(tileIndex) {
+            this.blocking.forEach(function(tileIndex) {
                 var pos = self.tileIndexToGridPosition(tileIndex+1);
                 if(self.grid[pos.y] !== undefined) {
                     self.grid[pos.y][pos.x] = 1;
@@ -226,7 +225,7 @@ import Types from 'shared/js/gametypes.js';
             for(var	j, i = 0; i < this.height; i++) {
                 this.plateauGrid[i] = [];
                 for(j = 0; j < this.width; j++) {
-                    if(_.include(this.plateau, tileIndex)) {
+                    if(this.plateau.includes(tileIndex)) {
                         this.plateauGrid[i][j] = 1;
                     } else {
                         this.plateauGrid[i][j] = 0;
@@ -255,7 +254,7 @@ import Types from 'shared/js/gametypes.js';
          * @see Renderer.drawHighTiles
          */
         isHighTile: function(id) {
-            return _.indexOf(this.high, id+1) >= 0;
+            return (this.high || []).indexOf(id+1) >= 0;
         },
     
         /**
@@ -295,7 +294,7 @@ import Types from 'shared/js/gametypes.js';
 
         _getCheckpoints: function(map) {
             var checkpoints = [];
-            _.each(map.checkpoints, function(cp) {
+            (map.checkpoints || []).forEach(function(cp) {
                 var area = new Area(cp.x, cp.y, cp.w, cp.h);
                 area.id = cp.id;
                 checkpoints.push(area);
@@ -304,7 +303,7 @@ import Types from 'shared/js/gametypes.js';
         },
     
         getCurrentCheckpoint: function(entity) {
-            return _.detect(this.checkpoints, function(checkpoint) {
+            return this.checkpoints.find(function(checkpoint) {
                 return checkpoint.contains(entity);
             });
         }

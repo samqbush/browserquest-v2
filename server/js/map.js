@@ -2,7 +2,6 @@
 var cls = require('./lib/class')
     path = require('path'),
     fs = require('fs'),
-    _ = require('underscore'),
     Utils = require('./utils'),
     Checkpoint = require('./checkpoint');
 
@@ -84,7 +83,7 @@ module.exports = Map = cls.Class.extend({
             for(var	j, i = 0; i < this.height; i++) {
                 this.grid[i] = [];
                 for(j = 0; j < this.width; j++) {
-                    if(_.include(this.collisions, tileIndex)) {
+                    if(this.collisions.includes(tileIndex)) {
                         this.grid[i][j] = 1;
                     } else {
                         this.grid[i][j] = 0;
@@ -144,21 +143,21 @@ module.exports = Map = cls.Class.extend({
                     pos(x-1, y+1), pos(x, y+1), pos(x+1, y+1)];
         
         // groups connected via doors
-        _.each(this.connectedGroups[id], function(position) {
+        (this.connectedGroups[id] || []).forEach(function(position) {
             // don't add a connected group if it's already part of the surrounding ones.
-            if(!_.any(list, function(groupPos) { return equalPositions(groupPos, position); })) {
+            if(!list.some(function(groupPos) { return equalPositions(groupPos, position); })) {
                 list.push(position);
             }
         });
         
-        return _.reject(list, function(pos) { 
-            return pos.x < 0 || pos.y < 0 || pos.x >= self.groupWidth || pos.y >= self.groupHeight;
+        return list.filter(function(pos) { 
+            return !(pos.x < 0 || pos.y < 0 || pos.x >= self.groupWidth || pos.y >= self.groupHeight);
         });
     },
     
     forEachAdjacentGroup: function(groupId, callback) {
         if(groupId) {
-            _.each(this.getAdjacentGroupPositions(groupId), function(pos) {
+            this.getAdjacentGroupPositions(groupId).forEach(function(pos) {
                 callback(pos.x+'-'+pos.y);
             });
         }
@@ -168,7 +167,7 @@ module.exports = Map = cls.Class.extend({
         var self = this;
 
         this.connectedGroups = {};
-        _.each(doors, function(door) {
+        (doors || []).forEach(function(door) {
             var groupId = self.getGroupIdFromPosition(door.x, door.y),
                 connectedGroupId = self.getGroupIdFromPosition(door.tx, door.ty),
                 connectedPosition = self.GroupIdToGroupPosition(connectedGroupId);
@@ -187,7 +186,7 @@ module.exports = Map = cls.Class.extend({
         this.checkpoints = {};
         this.startingAreas = [];
         
-        _.each(cpList, function(cp) {
+        (cpList || []).forEach(function(cp) {
             var checkpoint = new Checkpoint(cp.id, cp.x, cp.y, cp.w, cp.h);
             self.checkpoints[checkpoint.id] = checkpoint; 
             if(cp.s === 1) {
@@ -201,7 +200,7 @@ module.exports = Map = cls.Class.extend({
     },
     
     getRandomStartingPosition: function() {
-        var nbAreas = _.size(this.startingAreas);
+        var nbAreas = this.startingAreas.length;
             i = Utils.randomInt(0, nbAreas-1);
             area = this.startingAreas[i];
         

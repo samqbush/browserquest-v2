@@ -1,6 +1,5 @@
 
 var cls = require("./lib/class"),
-    _ = require("underscore"),
     Utils = require("./utils"),
     Types = require("../../shared/js/gametypes");
 
@@ -113,7 +112,7 @@ Messages.Drop = Message.extend({
                     this.mob.id,
                     this.item.id,
                     this.item.kind,
-                    _.pluck(this.mob.hatelist, "id")];
+                    this.mob.hatelist.map(function(o) { return o.id; })];
 
         return drop;
     }

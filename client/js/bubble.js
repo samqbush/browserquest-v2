@@ -1,6 +1,5 @@
 import $ from 'jquery';
 import Timer from './timer.js';
-import _ from 'underscore';
 import Class from './lib/class.js';
 
     var Bubble = Class.extend({
@@ -56,14 +55,14 @@ import Class from './lib/class.js';
             var self = this,
                 bubblesToDelete = [];
         
-            _.each(this.bubbles, function(bubble) {
+            Object.values(this.bubbles).forEach(function(bubble) {
                 if(bubble.isOver(time)) {
                     bubble.destroy();
                     bubblesToDelete.push(bubble.id);
                 }
             });
         
-            _.each(bubblesToDelete, function(id) {
+            bubblesToDelete.forEach(function(id) {
                 delete self.bubbles[id];
             });
         },
@@ -72,12 +71,12 @@ import Class from './lib/class.js';
             var self = this,
                 bubblesToDelete = [];
         
-            _.each(this.bubbles, function(bubble) {
+            Object.values(this.bubbles).forEach(function(bubble) {
                 bubble.destroy();
                 bubblesToDelete.push(bubble.id);
             });
         
-            _.each(bubblesToDelete, function(id) {
+            bubblesToDelete.forEach(function(id) {
                 delete self.bubbles[id];
             });
         
@@ -94,7 +93,7 @@ import Class from './lib/class.js';
         },
         
         forEachBubble: function(callback) {
-            _.each(this.bubbles, function(bubble) {
+            Object.values(this.bubbles).forEach(function(bubble) {
                 callback(bubble);
             });
         }

@@ -273,7 +273,7 @@ Phase 2.**
 
 ---
 
-## Phase 1: Runtime upgrade & transport rewrite (T-shirt size: L)
+## Phase 1: Runtime upgrade & transport rewrite (T-shirt size: L) — ✅ COMPLETE
 
 **Goal:** Run on Node 22 LTS with a single modern WebSocket library.
 **Prerequisites:** Phase 0 (need the golden trace to prove parity).
@@ -296,9 +296,9 @@ Phase 2.**
   tests over known XSS payloads in chat.
 
 ### Verification & exit criteria (Definition of Done)
-- [ ] Server boots on Node 22; `/status` responds.
-- [ ] Unmodified client completes spawn/move/chat/combat.
-- [ ] No abandoned server deps remain except those slated for Phase 3.
+- [x] Server boots on Node 22; `/status` responds.
+- [x] Unmodified client completes spawn/move/chat/combat.
+- [x] No abandoned server deps remain except those slated for Phase 3.
 
 ---
 
@@ -345,27 +345,43 @@ smoke test green in CI alongside the existing Vitest suite.
 
 ---
 
-## Phase 3: Utility & metrics cleanup (T-shirt size: M)
+## Phase 3: Utility & metrics cleanup (T-shirt size: M) — ✅ COMPLETE
 
 **Goal:** Remove remaining legacy deps; modern observability.
 **Prerequisites:** Phase 1.
 **Duration estimate:** 1-2 sprints.
 
+**Decisions (confirmed during implementation):**
+- **`underscore` → native ES, no new dependency.** All ~50 server and ~75
+  client call sites were trivially native; each was classified as
+  array / object-map / array-like / context-bound before converting (the
+  object-vs-array `_.each` distinction was the main hazard).
+- **Single-host metrics only.** Dropped `memcache`; added a `prom-client`
+  `/metrics` endpoint. Redis multi-host aggregation (original task 3.4) is
+  **dropped, not deferred** — population totals now derive locally from the
+  in-process worlds. `/metrics` is scrapeable by default, independent of the
+  `metrics_enabled` flag (which still only gates in-game population sharing).
+
 ### Tasks
-| ID | Task | Component | Blocked by |
-|----|------|-----------|------------|
-| 3.1 | Incrementally replace `underscore` with `lodash`/native ES | server+client | 1.1 |
-| 3.2 | Wrap metrics behind a `Metrics` interface | `metrics.js` | 1.1 |
-| 3.3 | Add `prom-client` `/metrics` endpoint (default impl) | server | 3.2 |
-| 3.4 | Optional Redis impl for multi-host counts; drop `memcache` | server | 3.2 |
+| ID | Task | Component | Blocked by | Status |
+|----|------|-----------|------------|--------|
+| 3.1 | Replace `underscore` with native ES (server + client + shared) | server+client+shared | 1.1 | ✅ |
+| 3.2 | Rewrite `Metrics` onto `prom-client` (per-instance registry) | `metrics.js` | 1.1 | ✅ |
+| 3.3 | Add `prom-client` `/metrics` endpoint (async, 500 on error) | server | 3.2 | ✅ |
+| 3.4 | ~~Optional Redis impl for multi-host counts~~ (dropped); drop `memcache` | server | 3.2 | ✅ (dropped Redis) |
 
 ### Risks & Mitigations
 - **Risk:** `_` semantics differ subtly (e.g., `_.min`/`_.detect` in
   `main.js:50-57`). → **Mitigation:** swap call-site by call-site with tests.
 
 ### Verification & exit criteria (Definition of Done)
-- [ ] No `underscore`/`memcache` in `package.json`.
-- [ ] `/metrics` scrapeable; `/status` unchanged.
+- [x] No `underscore`/`memcache` in `package.json` (`prom-client` added; lockfile updated).
+- [x] No `require`/`import` of `underscore` or `memcache` remains in source.
+- [x] `npm run lint` (0 errors) and `npm run madge` (no new cycles) pass.
+- [x] `npm test` green incl. new `test/metrics.test.js` (two-instance registry
+      isolation, parseable Prometheus output, exact `/status` body unchanged).
+- [x] `npm run test:e2e` (Playwright smoke) green — game plays identically.
+- [x] `/metrics` scrapeable by default; async handler returns `500` on registry error.
 
 ---
 

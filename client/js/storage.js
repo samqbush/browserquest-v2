@@ -1,4 +1,3 @@
-import _ from 'underscore';
 import Class from './lib/class.js';
 
     var Storage = Class.extend({
@@ -87,7 +86,7 @@ import Class from './lib/class.js';
         // Achievements
     
         hasUnlockedAchievement: function(id) {
-            return _.include(this.data.achievements.unlocked, id);
+            return this.data.achievements.unlocked.includes(id);
         },
     
         unlockAchievement: function(id) {
@@ -100,7 +99,7 @@ import Class from './lib/class.js';
         },
     
         getAchievementCount: function() {
-            return _.size(this.data.achievements.unlocked);
+            return this.data.achievements.unlocked.length;
         },
     
         // Angry rats

@@ -37,3 +37,12 @@ These instruction commands must be updated if new long term commands are decided
 `MODERNIZATION_PLAN.md` should be updated with the current status once an exit criteria is met for a phase.  If a phase is pass/fail is unknown this should be reported to the user.
 
 Each phase has its own exit criteria in the plan, but all phases share one gate: a phase is done only when its criteria are objectively verifiable (green CI / runnable commands, not judgement) and have actually been run and recorded. `npm run lint` and `npm test` must pass; if client/transport/protocol changed, `npm run test:e2e` must pass and the contract tests (`test/transport-contract.test.js`, `test/protocol-codes.test.js`) stay green. Green CI on the branch is the authoritative signal. Don't advance to the next phase until the current one's criteria are met.
+
+## Branching & PRs
+
+Each phase is developed on its own branch — never commit phase work directly to
+the default branch (`v2`). Create a new branch at the start of a phase (e.g.
+`phase-3-utility-metrics-cleanup`). Once the phase's exit criteria are met and
+recorded (green lint/test, and E2E + contract tests when client/transport/
+protocol changed), push the branch and open a PR to the default branch. Let CI
+on the PR be the authoritative green signal before merging.

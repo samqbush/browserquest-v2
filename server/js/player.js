@@ -1,6 +1,5 @@
 
 var cls = require("./lib/class"),
-    _ = require("underscore"),
     Messages = require("./message"),
     Utils = require("./utils"),
     Properties = require("./properties"),
@@ -327,7 +326,7 @@ module.exports = Player = Character.extend({
     },
     
     forEachHater: function(callback) {
-        _.each(this.haters, function(mob) {
+        Object.values(this.haters).forEach(function(mob) {
             callback(mob);
         });
     },

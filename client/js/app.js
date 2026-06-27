@@ -1,6 +1,5 @@
 import $ from 'jquery';
 import Storage from './storage.js';
-import _ from 'underscore';
 import Class from './lib/class.js';
 import log from './lib/log.js';
 
@@ -307,7 +306,7 @@ import log from './lib/log.js';
                 count = 0,
                 $p = null;
 
-            _.each(achievements, function(achievement) {
+            Object.values(achievements).forEach(function(achievement) {
                 count++;
     
                 var $a = $achievement.clone();
@@ -341,7 +340,7 @@ import log from './lib/log.js';
         initUnlockedAchievements: function(ids) {
             var self = this;
             
-            _.each(ids, function(id) {
+            ids.forEach(function(id) {
                 self.displayUnlockedAchievement(id);
             });
             $('#unlocked-achievements').text(ids.length);

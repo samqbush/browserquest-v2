@@ -21,7 +21,6 @@ import Mobs from './mobs.js';
 import Exceptions from './exceptions.js';
 import config from './config.js';
 import 'shared/js/gametypes.js';
-import _ from 'underscore';
 import Class from './lib/class.js';
 import log from './lib/log.js';
 import Types from 'shared/js/gametypes.js';
@@ -310,7 +309,7 @@ import Types from 'shared/js/gametypes.js';
                 }
             };
         
-            _.each(this.achievements, function(obj) {
+            Object.values(this.achievements).forEach(function(obj) {
                 if(!obj.isCompleted) {
                     obj.isCompleted = function() { return true; }
                 }
@@ -328,7 +327,7 @@ import Types from 'shared/js/gametypes.js';
     
         getAchievementById: function(id) {
             var found = null;
-            _.each(this.achievements, function(achievement, key) {
+            Object.values(this.achievements).forEach(function(achievement) {
                 if(achievement.id === parseInt(id)) {
                     found = achievement;
                 }
@@ -355,7 +354,7 @@ import Types from 'shared/js/gametypes.js';
             } else {
                 this.sprites = this.spritesets[scale - 1];
                 
-                _.each(this.entities, function(entity) {
+                Object.values(this.entities).forEach(function(entity) {
                     entity.sprite = null;
                     entity.setSprite(self.sprites[entity.getSpriteName()]);
                 });
@@ -371,11 +370,11 @@ import Types from 'shared/js/gametypes.js';
             this.spritesets[0] = {};
             this.spritesets[1] = {};
             this.spritesets[2] = {};
-            _.map(this.spriteNames, this.loadSprite, this);
+            this.spriteNames.forEach(this.loadSprite, this);
         },
     
         spritesLoaded: function() {
-            if(_.any(this.sprites, function(sprite) { return !sprite.isLoaded; })) {
+            if(Object.values(this.sprites).some(function(sprite) { return !sprite.isLoaded; })) {
                 return false;
             }
             return true;
@@ -642,7 +641,7 @@ import Types from 'shared/js/gametypes.js';
     
         initMusicAreas: function() {
             var self = this;
-            _.each(this.map.musicAreas, function(area) {
+            (this.map.musicAreas || []).forEach(function(area) {
                 self.audioManager.addArea(area.x, area.y, area.w, area.h, area.id);
             });
         },
@@ -767,19 +766,19 @@ import Types from 'shared/js/gametypes.js';
             });
         
             this.client.onEntityList(function(list) {
-                var entityIds = _.pluck(self.entities, 'id'),
-                    knownIds = _.intersection(entityIds, list),
-                    newIds = _.difference(list, knownIds);
+                var entityIds = Object.values(self.entities).map(function(e) { return e.id; }),
+                    knownIds = entityIds.filter(function(id) { return list.includes(id); }),
+                    newIds = list.filter(function(id) { return !knownIds.includes(id); });
             
-                self.obsoleteEntities = _.reject(self.entities, function(entity) {
-                    return _.include(knownIds, entity.id) || entity.id === self.player.id;
+                self.obsoleteEntities = Object.values(self.entities).filter(function(entity) {
+                    return !(knownIds.includes(entity.id) || entity.id === self.player.id);
                 });
             
                 // Destroy entities outside of the player's zone group
                 self.removeObsoleteEntities();
                 
                 // Ask the server for spawn information about unknown entities
-                if(_.size(newIds) > 0) {
+                if(newIds.length > 0) {
                     self.client.sendWho(newIds);
                 }
             });
@@ -949,7 +948,7 @@ import Types from 'shared/js/gametypes.js';
                                 self.audioManager.playSound("loot");
                             }
                             
-                            if(item.wasDropped && !_(item.playersInvolved).include(self.playerId)) {
+                            if(item.wasDropped && !item.playersInvolved.includes(self.playerId)) {
                                 self.tryUnlockingAchievement("NINJA_LOOT");
                             }
                         } catch(e) {
@@ -983,7 +982,7 @@ import Types from 'shared/js/gametypes.js';
                             }
                         }
                         
-                        if(_.size(self.player.attackers) > 0) {
+                        if(Object.keys(self.player.attackers).length > 0) {
                             setTimeout(function() { self.tryUnlockingAchievement("COWARD"); }, 500);
                         }
                         self.player.forEachAttacker(function(attacker) {
@@ -1372,7 +1371,7 @@ import Types from 'shared/js/gametypes.js';
                     if(mobName === 'boss') {
                         self.showNotification("You killed the skeleton king");
                     } else {
-                        if(_.include(['a', 'e', 'i', 'o', 'u'], mobName[0])) {
+                        if(['a', 'e', 'i', 'o', 'u'].includes(mobName[0])) {
                             self.showNotification("You killed an " + mobName);
                         } else {
                             self.showNotification("You killed a " + mobName);
@@ -1654,7 +1653,7 @@ import Types from 'shared/js/gametypes.js';
          * @param {Function} callback The function to call back (must accept one entity argument).
          */
         forEachEntity: function(callback) {
-            _.each(this.entities, function(entity) {
+            Object.values(this.entities).forEach(function(entity) {
                 callback(entity);
             });
         },
@@ -1664,7 +1663,7 @@ import Types from 'shared/js/gametypes.js';
          * @see forEachEntity
          */
         forEachMob: function(callback) {
-            _.each(this.entities, function(entity) {
+            Object.values(this.entities).forEach(function(entity) {
                 if(entity instanceof Mob) {
                     callback(entity);
                 }
@@ -1683,7 +1682,7 @@ import Types from 'shared/js/gametypes.js';
             this.camera.forEachVisiblePosition(function(x, y) {
                 if(!m.isOutOfBounds(x, y)) {
                     if(self.renderingGrid[y][x]) {
-                        _.each(self.renderingGrid[y][x], function(entity) {
+                        Object.values(self.renderingGrid[y][x]).forEach(function(entity) {
                             callback(entity);
                         });
                     }
@@ -1713,13 +1712,13 @@ import Types from 'shared/js/gametypes.js';
         
             if(m.isLoaded) {
                 this.forEachVisibleTileIndex(function(tileIndex) {
-                    if(_.isArray(m.data[tileIndex])) {
-                        _.each(m.data[tileIndex], function(id) {
+                    if(Array.isArray(m.data[tileIndex])) {
+                        m.data[tileIndex].forEach(function(id) {
                             callback(id-1, tileIndex);
                         });
                     }
                     else {
-                        if(_.isNaN(m.data[tileIndex]-1)) {
+                        if(Number.isNaN(m.data[tileIndex]-1)) {
                             //throw Error("Tile number for index:"+tileIndex+" is NaN");
                         } else {
                             callback(m.data[tileIndex]-1, tileIndex);
@@ -1734,7 +1733,7 @@ import Types from 'shared/js/gametypes.js';
          */
         forEachAnimatedTile: function(callback) {
             if(this.animatedTiles) {
-                _.each(this.animatedTiles, function(tile) {
+                this.animatedTiles.forEach(function(tile) {
                     callback(tile);
                 });
             }
@@ -1751,8 +1750,8 @@ import Types from 'shared/js/gametypes.js';
             
             var entities = this.entityGrid[y][x],
                 entity = null;
-            if(_.size(entities) > 0) {
-                entity = entities[_.keys(entities)[0]];
+            if(Object.keys(entities).length > 0) {
+                entity = entities[Object.keys(entities)[0]];
             } else {
                 entity = this.getItemAt(x, y);
             }
@@ -1790,9 +1789,9 @@ import Types from 'shared/js/gametypes.js';
             var items = this.itemGrid[y][x],
                 item = null;
 
-            if(_.size(items) > 0) {
+            if(Object.keys(items).length > 0) {
                 // If there are potions/burgers stacked with equipment items on the same tile, always get expendable items first.
-                _.each(items, function(i) {
+                Object.values(items).forEach(function(i) {
                     if(Types.isExpendableItem(i.kind)) {
                         item = i;
                     };
@@ -1800,7 +1799,7 @@ import Types from 'shared/js/gametypes.js';
 
                 // Else, get the first item of the stack
                 if(!item) {
-                    item = items[_.keys(items)[0]];
+                    item = items[Object.keys(items)[0]];
                 }
             }
             return item;
@@ -1811,23 +1810,23 @@ import Types from 'shared/js/gametypes.js';
          * @returns {Boolean} Whether an entity is at (x, y).
          */
         isEntityAt: function(x, y) {
-            return !_.isNull(this.getEntityAt(x, y));
+            return this.getEntityAt(x, y) !== null;
         },
 
         isMobAt: function(x, y) {
-            return !_.isNull(this.getMobAt(x, y));
+            return this.getMobAt(x, y) !== null;
         },
 
         isItemAt: function(x, y) {
-            return !_.isNull(this.getItemAt(x, y));
+            return this.getItemAt(x, y) !== null;
         },
 
         isNpcAt: function(x, y) {
-            return !_.isNull(this.getNpcAt(x, y));
+            return this.getNpcAt(x, y) !== null;
         },
 
         isChestAt: function(x, y) {
-            return !_.isNull(this.getChestAt(x, y));
+            return this.getChestAt(x, y) !== null;
         },
 
         /**
@@ -1846,7 +1845,7 @@ import Types from 'shared/js/gametypes.js';
         
             if(this.pathfinder && character) {
                 if(ignoreList) {
-                    _.each(ignoreList, function(entity) {
+                    ignoreList.forEach(function(entity) {
                         self.pathfinder.ignoreEntity(entity);
                     });
                 }
@@ -1969,7 +1968,7 @@ import Types from 'shared/js/gametypes.js';
                 list = this.entityGrid[Y][X],
                 result = false;
             
-            _.each(list, function(entity) {
+            Object.values(list).forEach(function(entity) {
                 if(entity instanceof Mob && entity.id !== mob.id) {
                     result = true;
                 }
@@ -2189,7 +2188,7 @@ import Types from 'shared/js/gametypes.js';
         },
     
         isZoning: function() {
-            return !_.isNull(this.currentZoning);
+            return this.currentZoning !== null;
         },
     
         resetZone: function() {
@@ -2363,16 +2362,16 @@ import Types from 'shared/js/gametypes.js';
         },
 
         removeObsoleteEntities: function() {
-            var nb = _.size(this.obsoleteEntities),
+            var nb = this.obsoleteEntities.length,
                 self = this;
         
             if(nb > 0) {
-                _.each(this.obsoleteEntities, function(entity) {
+                this.obsoleteEntities.forEach(function(entity) {
                     if(entity.id != self.player.id) { // never remove yourself
                         self.removeEntity(entity);
                     }
                 });
-                log.debug("Removed "+nb+" entities: "+_.pluck(_.reject(this.obsoleteEntities, function(id) { return id === self.player.id }), 'id'));
+                log.debug("Removed "+nb+" entities: "+this.obsoleteEntities.filter(function(id) { return id !== self.player.id; }).map(function(e) { return e.id; }));
                 this.obsoleteEntities = null;
             }
         },
@@ -2425,7 +2424,7 @@ import Types from 'shared/js/gametypes.js';
             for(var i = x-r, max_i = x+r; i <= max_i; i += 1) {
                 for(var j = y-r, max_j = y+r; j <= max_j; j += 1) {
                     if(!this.map.isOutOfBounds(i, j)) {
-                        _.each(this.renderingGrid[j][i], function(entity) {
+                        Object.values(this.renderingGrid[j][i]).forEach(function(entity) {
                             callback(entity);
                         });
                     }

@@ -1,6 +1,5 @@
 import $ from 'jquery';
 import App from './app.js';
-import _ from 'underscore';
 import log from './lib/log.js';
 
     var app, game;
@@ -386,7 +385,7 @@ import log from './lib/log.js';
                     }
                     if(key === 27) { // ESC
                         app.hideWindows();
-                        _.each(game.player.attackers, function(attacker) {
+                        Object.values(game.player.attackers).forEach(function(attacker) {
                             attacker.stop();
                         });
                         return false;
