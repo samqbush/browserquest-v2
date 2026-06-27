@@ -222,31 +222,54 @@ Ordering: infrastructure & safety net first, then the runtime/transport upgrade
 product features. **A playable game on a modern stack is reached at the end of
 Phase 2.**
 
+> **Phase gating (applies to every phase):** A phase is **not complete** until
+> its **Verification & exit criteria** pass. Each phase below carries a
+> Definition of Done that must be (a) objectively verifiable (runnable commands
+> / green CI, not a subjective judgement) and (b) actually executed and
+> recorded before starting the next phase. No phase ships without its tests
+> green. The authoritative signal is a green CI run on the phase's branch/PR.
+> Do not advance to phase N+1 until phase N's exit criteria are demonstrably
+> met.
+
 ---
 
-## Phase 0: Safety net & baseline (T-shirt size: M)
+## Phase 0: Safety net & baseline (T-shirt size: M) — ✅ COMPLETE
 
 **Goal:** Make change safe before changing anything.
 **Prerequisites:** None.
 **Duration estimate:** 1-2 sprints.
+**Status:** Complete. Verified on Node v25.8.2; CI targets Node 22. See
+[`BASELINE.md`](./BASELINE.md).
 
 ### Tasks
-| ID | Task | Component | Blocked by |
-|----|------|-----------|------------|
-| 0.1 | Add `package.json` scripts (`start`, `build`, `test`, `lint`) | root | — |
-| 0.2 | Add ESLint + Prettier; fix/curb implicit globals (`log`, `Types`) | server+client | — |
-| 0.3 | Add a protocol golden-trace test (connect→HELLO→WELCOME→MOVE) against current server | test | — |
-| 0.4 | Add GitHub Actions CI (install, lint, test) | `.github/workflows` | 0.1-0.3 |
-| 0.5 | Pin current deps + record a known-good baseline run | root | — |
+| ID | Task | Component | Blocked by | Status |
+|----|------|-----------|------------|--------|
+| 0.1 | Add `package.json` scripts (`start`, `build`, `test`, `lint`, `format`) | root | — | ✅ |
+| 0.2 | Add ESLint + Prettier; declare/curb implicit globals (`log`, `Types`, `Class`) — lenient (warn-only) on legacy | server+client | — | ✅ |
+| 0.3 | Add protocol contract tests (Vitest): golden codes, all `message.js` serialize shapes, inbound `format.check()`, transport codec spec, client/server lockstep | test | — | ✅ |
+| 0.4 | Add GitHub Actions CI (`npm ci`, lint, test) on Node 22 | `.github/workflows` | 0.1-0.3, 0.5 | ✅ |
+| 0.5 | Resolve legacy-dep install strategy, pin deps + lockfile, record baseline | root | — | ✅ |
 
 ### Risks & Mitigations
 - **Risk:** Old deps won't install on a modern machine to capture the baseline. →
-  **Mitigation:** Capture the golden trace using a containerized old Node, or
-  derive expected messages from `message.js` + `gametypes.js`.
+  **Resolved:** `">0"` means `>=1.0.0` in npm semver, so the legacy manifest
+  cannot install (`sanitizer` max is 0.1.3; `websocket-server` was unpublished
+  in 2014). Pinned `underscore` as a real dep; moved the abandoned,
+  Phase-1-doomed deps to `optionalDependencies` (failures tolerated). Golden
+  expectations are derived from `message.js`/`gametypes.js`, not a live server.
+- **Note:** Because `ws.js` requires the unpublished `websocket-server`, it
+  cannot load yet; its wire contract is captured as an executable spec
+  (`test/transport-contract.test.js`) that the Phase 1 `ws` adapter must satisfy.
 
-### Definition of Done
-- [ ] `npm run lint` and `npm test` pass in CI on every push.
-- [ ] A golden protocol trace exists and passes against the current server.
+### Verification & exit criteria (Definition of Done) — ✅ met
+- [x] `npm ci` installs cleanly (legacy optional-dep failures tolerated).
+- [x] `npm run lint` passes (0 errors; legacy warnings only).
+- [x] `npm test` passes (42 tests / 5 files) against current source.
+- [x] A hard-coded golden protocol fixture + transport codec spec exist and pass.
+- [x] GitHub Actions CI runs `npm ci → lint → test` on Node 22 for every push/PR.
+- [x] `package-lock.json` committed; baseline recorded in `BASELINE.md`.
+- [x] **Net proven to fail:** a deliberate protocol mutation turns `npm test` red.
+- [x] Purely additive — no game logic / `ws.js` / dependency behavior changed.
 
 ---
 
@@ -272,7 +295,7 @@ Phase 2.**
 - **Risk:** Sanitizer swap changes escaping behavior. → **Mitigation:** unit
   tests over known XSS payloads in chat.
 
-### Definition of Done
+### Verification & exit criteria (Definition of Done)
 - [ ] Server boots on Node 22; `/status` responds.
 - [ ] Unmodified client completes spawn/move/chat/combat.
 - [ ] No abandoned server deps remain except those slated for Phase 3.
@@ -300,7 +323,7 @@ Phase 2.**
 - **Risk:** `mapworker.js` Web Worker import path changes. → **Mitigation:** use
   Vite's `?worker` import; smoke-test desktop map load.
 
-### Definition of Done
+### Verification & exit criteria (Definition of Done)
 - [ ] `vite build` emits a self-contained `dist/`.
 - [ ] Playwright smoke test passes in CI.
 - [ ] Game is visually and functionally identical in browser.
@@ -325,7 +348,7 @@ Phase 2.**
 - **Risk:** `_` semantics differ subtly (e.g., `_.min`/`_.detect` in
   `main.js:50-57`). → **Mitigation:** swap call-site by call-site with tests.
 
-### Definition of Done
+### Verification & exit criteria (Definition of Done)
 - [ ] No `underscore`/`memcache` in `package.json`.
 - [ ] `/metrics` scrapeable; `/status` unchanged.
 
@@ -350,7 +373,7 @@ Phase 2.**
   **Mitigation:** scope a minimal account/token model as a sub-decision; keep
   anonymous play as default.
 
-### Definition of Done
+### Verification & exit criteria (Definition of Done)
 - [ ] With a store configured, name/achievements/inventory persist across
       reconnect; default in-memory path unchanged.
 
@@ -369,7 +392,7 @@ Phase 2.**
 | 5.2 | Generate shared protocol types consumed by client+server | shared | 5.1 |
 | 5.3 | Type `worldserver.js`/`player.js` incrementally | server | 5.1 |
 
-### Definition of Done
+### Verification & exit criteria (Definition of Done)
 - [ ] Protocol is type-checked end to end; build stays green.
 
 ---
