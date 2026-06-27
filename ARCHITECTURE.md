@@ -106,17 +106,31 @@ the repo.** `[INFERRED from absence]` — no `test/` dir, no `.eslintrc`, no
 | `entity.js` / `character.js` / `item.js` / `chest.js` / `npc.js` | Entity hierarchy | respective files |
 | `area.js` / `checkpoint.js` / `chestarea.js` | Spatial regions | respective files |
 | `metrics.js` | Optional memcached population counters | `server/js/metrics.js` |
+| `playerstore.js` | Optional player persistence: `PlayerStore` (SQLite/in-memory), token minting, `SessionRegistry` (Phase 4) | `server/js/playerstore.js` |
 | `format.js` / `formulas.js` / `properties.js` / `utils.js` | Message validation, damage/HP formulas, mob/item stats, helpers | respective files |
 
 ### Data / storage layers
 
-- **No database.** Game state is entirely in-memory per world process
-  (`server/js/worldserver.js:33-43`). No persistence of players, inventory, or
-  progress — quitting loses everything. `[INFERRED]` confirmed by absence of any
-  DB driver in `package.json:5-13`.
+- **No database by default.** Game state is in-memory per world process
+  (`server/js/worldserver.js:33-43`). With persistence disabled (the default),
+  quitting loses everything. `[INFERRED]` confirmed by absence of any DB driver
+  in the original dep tree.
+- **Optional player persistence (Phase 4).** Behind `persistence_enabled`
+  (`server/config.json`), a `PlayerStore` (`server/js/playerstore.js`) persists a
+  reconnecting player's `name`, equipped armor/weapon, position, orientation, and
+  last checkpoint id, keyed by a server-issued anonymous opaque **bearer token**
+  (`crypto.randomUUID`). Default backend is SQLite (`better-sqlite3`, WAL); an
+  in-memory store exists as a test double / dev mode. The token is appended to
+  WELCOME and stored client-side in `localStorage`; the client re-presents it in
+  HELLO (optional 4th param) on reconnect. A process-wide `SessionRegistry`
+  fences duplicate-token logins (the newer session supersedes the older; a
+  superseded session's save is ignored), and loaded data is validated as
+  untrusted. When the flag is off, no token is minted and WELCOME is byte-for-byte
+  the original 6 fields. Persistence assumes single-host (in-process registry +
+  local SQLite file).
 - **Client-side persistence:** browser `localStorage` via `client/js/storage.js`
-  holds the player name, achievements, and "has played" flag
-  (`client/js/main.js:139-145`).
+  holds the player name, achievements, "has played" flag, and (Phase 4) the
+  reconnect token (`client/js/main.js:139-145`).
 - **memcached:** only used for cross-process *population counters*, not game
   state, and only when `metrics_enabled` (`server/js/metrics.js:28-63`,
   `server/config.json:7`).

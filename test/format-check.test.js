@@ -28,6 +28,10 @@ describe('format.check() accepts valid messages', () => {
     expect(check([M.HELLO, 'hero', 21, 60])).toBe(true);
   });
 
+  it('HELLO with optional reconnect token [name, armor, weapon, token(s)]', () => {
+    expect(check([M.HELLO, 'hero', 21, 60, 'a1b2-token'])).toBe(true);
+  });
+
   it('MOVE [x(n), y(n)]', () => {
     expect(check([M.MOVE, 10, 20])).toBe(true);
   });
@@ -54,6 +58,18 @@ describe('format.check() rejects malformed messages', () => {
   it('HELLO with wrong types', () => {
     expect(check([M.HELLO, 'hero', 'notNumber', 60])).toBe(false);
     expect(check([M.HELLO, 123, 21, 60])).toBe(false);
+  });
+
+  it('HELLO with a non-string token', () => {
+    expect(check([M.HELLO, 'hero', 21, 60, 12345])).toBe(false);
+  });
+
+  it('HELLO with too many params (5+)', () => {
+    expect(check([M.HELLO, 'hero', 21, 60, 'tok', 'extra'])).toBe(false);
+  });
+
+  it('HELLO with an over-long token', () => {
+    expect(check([M.HELLO, 'hero', 21, 60, 'x'.repeat(65)])).toBe(false);
   });
 
   it('CHAT with a numeric body', () => {

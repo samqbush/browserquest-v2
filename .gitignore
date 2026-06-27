@@ -12,3 +12,10 @@ test-results
 .env.local
 .DS_Store
 *.swp
+
+# Phase 4 persistence: local SQLite player store
+server/data
+*.db
+*.db-shm
+*.db-wal
+*.sqlite

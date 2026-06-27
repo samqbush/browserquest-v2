@@ -171,10 +171,14 @@ import $ from 'jquery';
                 name = data[2],
                 x = data[3],
                 y = data[4],
-                hp = data[5];
+                hp = data[5],
+                orientation = data[6],
+                armor = data[7],
+                weapon = data[8],
+                token = data[9];
         
             if(this.welcome_callback) {
-                this.welcome_callback(id, name, x, y, hp);
+                this.welcome_callback(id, name, x, y, hp, orientation, armor, weapon, token);
             }
         },
     
@@ -469,11 +473,15 @@ import $ from 'jquery';
             this.blink_callback = callback;
         },
 
-        sendHello: function(player) {
-            this.sendMessage([Types.Messages.HELLO,
-                              player.name,
-                              Types.getKindFromString(player.getSpriteName()),
-                              Types.getKindFromString(player.getWeaponName())]);
+        sendHello: function(player, token) {
+            var message = [Types.Messages.HELLO,
+                           player.name,
+                           Types.getKindFromString(player.getSpriteName()),
+                           Types.getKindFromString(player.getWeaponName())];
+            if(token) {
+                message.push(token);
+            }
+            this.sendMessage(message);
         },
 
         sendMove: function(x, y) {

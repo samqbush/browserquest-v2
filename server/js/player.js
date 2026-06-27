@@ -5,6 +5,7 @@ var cls = require("./lib/class"),
     Properties = require("./properties"),
     Formulas = require("./formulas"),
     check = require("./format").check,
+    PlayerStore = require("./playerstore"),
     Types = require("../../shared/js/gametypes");
 
 module.exports = Player = Character.extend({
@@ -22,22 +23,40 @@ module.exports = Player = Character.extend({
         this.lastCheckpoint = null;
         this.formatChecker = new FormatChecker();
         this.disconnectTimeout = null;
+
+        // Phase 4 persistence: store + token are null unless persistence is on.
+        this.store = worldServer.store || null;
+        this.sessions = worldServer.sessions || null;
+        this.token = null;
+        this.session = null;
+        this.isSuperseded = false;
+        this.hasRestoredPosition = false;
+        this.saveTimeout = null;
         
         this.connection.listen(function(message) {
             var action = parseInt(message[0]);
-            
-            log.debug("Received: "+message);
+
+            // Redact the HELLO bearer token (message[4]) before logging or
+            // echoing the raw message back in a close reason, so credentials
+            // never leak into logs.
+            var redacted = message;
+            if(action === Types.Messages.HELLO && Array.isArray(message) && message.length > 4) {
+                redacted = message.slice();
+                redacted[4] = "[redacted]";
+            }
+
+            log.debug("Received: "+redacted);
             if(!check(message)) {
-                self.connection.close("Invalid "+Types.getMessageTypeAsString(action)+" message format: "+message);
+                self.connection.close("Invalid "+Types.getMessageTypeAsString(action)+" message format: "+redacted);
                 return;
             }
             
             if(!self.hasEnteredGame && action !== Types.Messages.HELLO) { // HELLO must be the first message
-                self.connection.close("Invalid handshake message: "+message);
+                self.connection.close("Invalid handshake message: "+redacted);
                 return;
             }
             if(self.hasEnteredGame && !self.isDead && action === Types.Messages.HELLO) { // HELLO can be sent only once
-                self.connection.close("Cannot initiate handshake twice: "+message);
+                self.connection.close("Cannot initiate handshake twice: "+redacted);
                 return;
             }
             
@@ -55,13 +74,27 @@ module.exports = Player = Character.extend({
                 self.equipArmor(message[2]);
                 self.equipWeapon(message[3]);
                 self.orientation = Utils.randomOrientation();
+
+                // Phase 4: restore persisted state if a valid token was sent.
+                // This may overwrite name/gear/orientation and restore position.
+                var presentedToken = (typeof message[4] === 'string' && message[4].length > 0) ? message[4] : null;
+                self.loadPersistedState(presentedToken);
+
                 self.updateHitPoints();
-                self.updatePosition();
+                if(!self.hasRestoredPosition) {
+                    self.updatePosition();
+                }
                 
                 self.server.addPlayer(self);
                 self.server.enter_callback(self);
 
-                self.send([Types.Messages.WELCOME, self.id, self.name, self.x, self.y, self.hitPoints]);
+                var welcome = [Types.Messages.WELCOME, self.id, self.name, self.x, self.y, self.hitPoints];
+                if(self.store) {
+                    // Append server-authoritative gear/orientation + echoed token
+                    // so the returning client matches what others see via SPAWN.
+                    welcome.push(self.orientation, self.armor, self.weapon, self.token);
+                }
+                self.send(welcome);
                 self.hasEnteredGame = true;
                 self.isDead = false;
             }
@@ -92,6 +125,7 @@ module.exports = Player = Character.extend({
                         
                         self.broadcast(new Messages.Move(self));
                         self.move_callback(self.x, self.y);
+                        self.scheduleSave();
                     }
                 }
             }
@@ -105,6 +139,7 @@ module.exports = Player = Character.extend({
 
                         self.broadcast(new Messages.LootMove(self, item));
                         self.lootmove_callback(self.x, self.y);
+                        self.scheduleSave();
                     }
                 }
             }
@@ -184,6 +219,7 @@ module.exports = Player = Character.extend({
                         } else if(Types.isArmor(kind) || Types.isWeapon(kind)) {
                             self.equipItem(item);
                             self.broadcast(self.equip(kind));
+                            self.savePersistedState(); // gear change is durable
                         }
                     }
                 }
@@ -200,6 +236,7 @@ module.exports = Player = Character.extend({
                     
                     self.server.handlePlayerVanish(self);
                     self.server.pushRelevantEntityListTo(self);
+                    self.savePersistedState();
                 }
             }
             else if(action === Types.Messages.OPEN) {
@@ -212,6 +249,7 @@ module.exports = Player = Character.extend({
                 var checkpoint = self.server.map.getCheckpoint(message[1]);
                 if(checkpoint) {
                     self.lastCheckpoint = checkpoint;
+                    self.savePersistedState(); // checkpoint is a durable spawn
                 }
             }
             else {
@@ -226,6 +264,11 @@ module.exports = Player = Character.extend({
                 clearTimeout(self.firepotionTimeout);
             }
             clearTimeout(self.disconnectTimeout);
+            clearTimeout(self.saveTimeout);
+            self.savePersistedState();
+            if(self.sessions && self.token) {
+                self.sessions.release(self.token, self.session);
+            }
             if(self.exit_callback) {
                 self.exit_callback();
             }
@@ -378,5 +421,129 @@ module.exports = Player = Character.extend({
     timeout: function() {
         this.connection.sendUTF8("timeout");
         this.connection.close("Player was idle for too long");
+    },
+
+    // ------- Phase 4: optional persistence -------
+
+    // Resolve the player's token (minting a fresh one if needed), fence the
+    // session against duplicate logins, and hydrate persisted state. Treats all
+    // stored data as untrusted. Returns true if prior state was restored.
+    loadPersistedState: function(presentedToken) {
+        this.hasRestoredPosition = false;
+
+        if(!this.store) {
+            return false;
+        }
+
+        // A presented token is a bearer key: always reuse it (so a reconnecting
+        // client keeps the same token and the session registry can fence it,
+        // even before any state has been saved for it). New players get a fresh
+        // minted token. State is restored only if a stored row exists.
+        var token = presentedToken || PlayerStore.mintToken();
+        this.token = token;
+
+        // Session fencing: supersede any live session holding the same token so
+        // two sessions can't run (and later clobber each other's saved state).
+        if(this.sessions) {
+            var acquired = this.sessions.acquire(token, this);
+            this.session = acquired.sessionId;
+            if(acquired.previous && acquired.previous !== this) {
+                acquired.previous.supersede();
+            }
+        }
+
+        var row = null;
+        if(presentedToken) {
+            try {
+                row = this.store.load(token);
+            } catch(e) {
+                log.error("PlayerStore load failed: " + e);
+                row = null;
+            }
+        }
+
+        if(!row) {
+            return false;
+        }
+
+        var name = Utils.sanitize(String(row.name === undefined || row.name === null ? "" : row.name));
+        if(name !== "") {
+            this.name = name.substr(0, 15);
+        }
+        if(Types.isArmor(row.armor)) {
+            this.equipArmor(row.armor);
+        }
+        if(Types.isWeapon(row.weapon)) {
+            this.equipWeapon(row.weapon);
+        }
+        if(this.isValidOrientation(row.orientation)) {
+            this.orientation = row.orientation;
+        }
+        if(row.checkpointId !== null && row.checkpointId !== undefined) {
+            var checkpoint = this.server.map.getCheckpoint(row.checkpointId);
+            if(checkpoint) {
+                this.lastCheckpoint = checkpoint;
+            }
+        }
+        if(typeof row.x === 'number' && typeof row.y === 'number' && this.server.isValidPosition(row.x, row.y)) {
+            this.setPosition(row.x, row.y);
+            this.hasRestoredPosition = true;
+        }
+        return true;
+    },
+
+    isValidOrientation: function(o) {
+        return o === Types.Orientations.UP || o === Types.Orientations.DOWN
+            || o === Types.Orientations.LEFT || o === Types.Orientations.RIGHT;
+    },
+
+    // Persist current state. No-op when persistence is off or when this session
+    // has been superseded (so a stale session can't roll back newer progress).
+    savePersistedState: function() {
+        if(!this.store || !this.token) {
+            return;
+        }
+        if(this.sessions && !this.sessions.isCurrent(this.token, this.session)) {
+            return;
+        }
+        var state = {
+            name: this.name,
+            armor: this.armor,
+            weapon: this.weapon,
+            x: this.x,
+            y: this.y,
+            orientation: this.orientation,
+            checkpointId: this.lastCheckpoint ? this.lastCheckpoint.id : null
+        };
+        try {
+            this.store.save(this.token, state);
+        } catch(e) {
+            log.error("PlayerStore save failed: " + e);
+        }
+    },
+
+    // Throttled save for high-frequency events (movement): a save is scheduled
+    // only when none is already pending, coalescing writes so they never run on
+    // the per-tick hot path.
+    scheduleSave: function() {
+        var self = this;
+        if(!this.store || !this.token || this.saveTimeout) {
+            return;
+        }
+        this.saveTimeout = setTimeout(function() {
+            self.saveTimeout = null;
+            self.savePersistedState();
+        }, 5000);
+    },
+
+    // Called on the previous holder of a token when a newer session takes over.
+    supersede: function() {
+        this.isSuperseded = true;
+        clearTimeout(this.saveTimeout);
+        try {
+            this.connection.close("Replaced by a newer session for the same token");
+        } catch(e) {
+            /* connection may already be closing */
+        }
     }
 });

@@ -34,7 +34,8 @@ These instruction commands must be updated if new long term commands are decided
 
 ## Phases
 
-`MODERNIZATION_PLAN.md` should be updated with the current status once an exit criteria is met for a phase.  If a phase is pass/fail is unknown this should be reported to the user.
+- `MODERNIZATION_PLAN.md` should be updated with the current status once an exit criteria is met for a phase.  If a phase is pass/fail is unknown this should be reported to the user.
+- When creating a phase plan, all sub decisions must be decided and documented in the plan so that the implementation can be done without further user input.
 
 Each phase has its own exit criteria in the plan, but all phases share one gate: a phase is done only when its criteria are objectively verifiable (green CI / runnable commands, not judgement) and have actually been run and recorded. `npm run lint` and `npm test` must pass; if client/transport/protocol changed, `npm run test:e2e` must pass and the contract tests (`test/transport-contract.test.js`, `test/protocol-codes.test.js`) stay green. Green CI on the branch is the authoritative signal. Don't advance to the next phase until the current one's criteria are met.
 

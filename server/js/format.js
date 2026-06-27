@@ -26,6 +26,23 @@ var Types = require("../../shared/js/gametypes");
                 format = this.formats[type];
             
             message.shift();
+
+            // HELLO carries an OPTIONAL trailing reconnect token (Phase 4):
+            // [name(s), armor(n), weapon(n)] or [..., token(s)]. The relaxation
+            // is unconditional (not gated on persistence) so a client carrying a
+            // stored token is never rejected by a server with persistence off.
+            if(type === Types.Messages.HELLO) {
+                if(message.length !== 3 && message.length !== 4) {
+                    return false;
+                }
+                if(typeof message[0] !== 'string') { return false; }
+                if(typeof message[1] !== 'number') { return false; }
+                if(typeof message[2] !== 'number') { return false; }
+                if(message.length === 4 && (typeof message[3] !== 'string' || message[3].length > 64)) {
+                    return false;
+                }
+                return true;
+            }
             
             if(format) {    
                 if(message.length !== format.length) {

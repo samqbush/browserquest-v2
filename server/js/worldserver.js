@@ -19,12 +19,14 @@ var cls = require("./lib/class"),
 // ======= GAME SERVER ========
 
 module.exports = World = cls.Class.extend({
-    init: function(id, maxPlayers, websocketServer) {
+    init: function(id, maxPlayers, websocketServer, store, sessions) {
         var self = this;
 
         this.id = id;
         this.maxPlayers = maxPlayers;
         this.server = websocketServer;
+        this.store = store || null;
+        this.sessions = sessions || null;
         this.ups = 50;
         
         this.map = null;

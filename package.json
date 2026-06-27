@@ -20,6 +20,7 @@
     "madge": "madge --circular client/js"
   },
   "dependencies": {
+    "better-sqlite3": "^12.11.1",
     "jquery": "^3.7.1",
     "pino": "^10.3.1",
     "prom-client": "^15.1.3",
