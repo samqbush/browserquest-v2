@@ -1,5 +1,4 @@
-
-define(function() {
+import Class from './lib/class.js';
 
     var Area = Class.extend({
         init: function(x, y, width, height) {
@@ -21,5 +20,5 @@ define(function() {
         }
     });
     
-    return Area;
-});
+export default Area;
+

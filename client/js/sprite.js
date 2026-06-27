@@ -1,5 +1,8 @@
-
-define(['jquery', 'animation', 'sprites'], function($, Animation, sprites) {
+import $ from 'jquery';
+import Animation from './animation.js';
+import sprites from './sprites.js';
+import Class from './lib/class.js';
+import log from './lib/log.js';
 
     var Sprite = Class.extend({
         init: function(name, scale) {
@@ -50,6 +53,13 @@ define(['jquery', 'animation', 'sprites'], function($, Animation, sprites) {
     	},
 	
     	createHurtSprite: function() {
+    	    // The sprite image may not be decoded yet when this is first called
+    	    // (initHurtSprites can run before all images load). Skip until ready;
+    	    // it is re-invoked once the sprites are fully loaded.
+    	    if(!this.isLoaded || !this.image || !this.image.width) {
+    	        return;
+    	    }
+
     	    var canvas = document.createElement('canvas'),
     	        ctx = canvas.getContext('2d'),
     	        width = this.image.width,
@@ -69,7 +79,6 @@ define(['jquery', 'animation', 'sprites'], function($, Animation, sprites) {
         	        data[i] = 255;
         	        data[i+1] = data[i+2] = 75;
         	    }
-        	    spriteData.data = data;
 
         	    ctx.putImageData(spriteData, 0, 0);
 
@@ -91,6 +100,10 @@ define(['jquery', 'animation', 'sprites'], function($, Animation, sprites) {
     	},
 	
     	createSilhouette: function() {
+    	    if(!this.isLoaded || !this.image || !this.image.width) {
+    	        return;
+    	    }
+
     	    var canvas = document.createElement('canvas'),
     	        ctx = canvas.getContext('2d'),
     	        width = this.image.width,
@@ -102,7 +115,7 @@ define(['jquery', 'animation', 'sprites'], function($, Animation, sprites) {
     	    ctx.drawImage(this.image, 0, 0, width, height);
     	    data = ctx.getImageData(0, 0, width, height).data;
     	    finalData = ctx.getImageData(0, 0, width, height);
-    	    fdata = finalData.data;
+    	    var fdata = finalData.data;
 	    
     	    var getIndex = function(x, y) {
     	        return ((width * (y-1)) + x - 1) * 4;
@@ -151,7 +164,6 @@ define(['jquery', 'animation', 'sprites'], function($, Animation, sprites) {
     	        }
     	    }
 
-    	    finalData.data = fdata;
     	    ctx.putImageData(finalData, 0, 0);
 	    
     	    this.silhouetteSprite = { 
@@ -165,5 +177,5 @@ define(['jquery', 'animation', 'sprites'], function($, Animation, sprites) {
     	}
     });
 
-    return Sprite;
-});
+export default Sprite;
+

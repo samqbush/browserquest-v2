@@ -1,5 +1,7 @@
-
-define(['jquery', 'timer'], function($, Timer) {
+import $ from 'jquery';
+import Timer from './timer.js';
+import _ from 'underscore';
+import Class from './lib/class.js';
 
     var Bubble = Class.extend({
         init: function(id, element, time) {
@@ -98,5 +100,5 @@ define(['jquery', 'timer'], function($, Timer) {
         }
     });
     
-    return BubbleManager;
-});
+export default BubbleManager;
+

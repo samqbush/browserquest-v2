@@ -1,5 +1,5 @@
-
-define(['entity'], function(Entity) {
+import Entity from './entity.js';
+import Types from 'shared/js/gametypes.js';
 
     var Chest = Entity.extend({
         init: function(id, kind) {
@@ -25,5 +25,5 @@ define(['entity'], function(Entity) {
         }
     });
     
-    return Chest;
-});
+export default Chest;
+

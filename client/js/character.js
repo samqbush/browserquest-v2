@@ -1,5 +1,9 @@
-
-define(['entity', 'transition', 'timer'], function(Entity, Transition, Timer) {
+import Entity from './entity.js';
+import Transition from './transition.js';
+import Timer from './timer.js';
+import _ from 'underscore';
+import log from './lib/log.js';
+import Types from 'shared/js/gametypes.js';
 
     var Character = Entity.extend({
         init: function(id, kind) {
@@ -65,7 +69,7 @@ define(['entity', 'transition', 'timer'], function(Entity, Transition, Timer) {
     	},
 	
     	animate: function(animation, speed, count, onEndCount) {
-    	    var oriented = ['atk', 'walk', 'idle'];
+    	    var oriented = ['atk', 'walk', 'idle'],
     	        o = this.orientation;
             
             if(!(this.currentAnimation && this.currentAnimation.name === "death")) { // don't change animation if the character is dying
@@ -548,5 +552,5 @@ define(['entity', 'transition', 'timer'], function(Entity, Transition, Timer) {
         }
     });
     
-    return Character;
-});
+export default Character;
+

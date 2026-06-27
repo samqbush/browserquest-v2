@@ -1,5 +1,7 @@
-
-define(['character', 'exceptions'], function(Character, Exceptions) {
+import Character from './character.js';
+import Exceptions from './exceptions.js';
+import log from './lib/log.js';
+import Types from 'shared/js/gametypes.js';
 
     var Player = Character.extend({
         MAX_LEVEL: 10,
@@ -214,5 +216,5 @@ define(['character', 'exceptions'], function(Character, Exceptions) {
         }
     });
 
-    return Player;
-});
+export default Player;
+

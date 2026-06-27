@@ -1,5 +1,7 @@
-
-define(['character', 'timer'], function(Character, Timer) {
+import Character from './character.js';
+import Timer from './timer.js';
+import Class from './lib/class.js';
+import Types from 'shared/js/gametypes.js';
 
     var Updater = Class.extend({
         init: function(game) {
@@ -90,7 +92,9 @@ define(['character', 'timer'], function(Character, Timer) {
         
             if(z && z.inProgress === false) {
                 var orientation = this.game.zoningOrientation,
-                    startValue = endValue = offset = 0,
+                    startValue = 0,
+                    endValue = 0,
+                    offset = 0,
                     updateFunc = null,
                     endFunc = null;
             
@@ -249,5 +253,5 @@ define(['character', 'timer'], function(Character, Timer) {
         }
     });
     
-    return Updater;
-});
+export default Updater;
+

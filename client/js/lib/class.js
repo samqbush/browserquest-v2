@@ -7,10 +7,10 @@
 var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
     
 // The base Class implementation (does nothing)
-Class = function() {};
+var Class = function() {};
 
 // Create a new Class that inherits from this class
-Class.extend = function(prop) {
+Class.extend = function extend(prop) {
     var _super = this.prototype;
     
     // Instantiate a base class (but only create the instance,
@@ -44,25 +44,23 @@ Class.extend = function(prop) {
     }
     
     // The dummy class constructor
-    Class = function () {
+    function NewClass() {
         // All construction is actually done in the init method
         if ( !initializing && this.init )
             this.init.apply(this, arguments);
     }
     
     // Populate our constructed prototype object
-    Class.prototype = prototype;
+    NewClass.prototype = prototype;
     
     // Enforce the constructor to be what we expect
-    Class.constructor = Class;
+    NewClass.prototype.constructor = NewClass;
     
-    // And make this class extendable
-    Class.extend = arguments.callee;
+    // And make this class extendable (ESM strict mode forbids arguments.callee)
+    NewClass.extend = extend;
     
-    return Class;
+    return NewClass;
 };
 
-if(!(typeof exports === 'undefined')) {
-    exports.Class = Class;
-}
+export default Class;
 

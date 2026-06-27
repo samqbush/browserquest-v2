@@ -1,5 +1,5 @@
+import Class from './lib/class.js';
 
-define(function() {
     
     var Exceptions = {
         
@@ -10,5 +10,5 @@ define(function() {
         })
     };
     
-    return Exceptions;
-});
+export default Exceptions;
+

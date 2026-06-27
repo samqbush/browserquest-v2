@@ -1,5 +1,6 @@
+import Player from './player.js';
+import Types from 'shared/js/gametypes.js';
 
-define(['player'], function(Player) {
     
     var Warrior = Player.extend({
         init: function(id, name) {
@@ -7,5 +8,5 @@ define(['player'], function(Player) {
         },
     });
     
-    return Warrior;
-});
+export default Warrior;
+

@@ -1,5 +1,6 @@
+import Item from './item.js';
+import Types from 'shared/js/gametypes.js';
 
-define(['item'], function(Item) {
     
     var Items = {
         
@@ -113,5 +114,5 @@ define(['item'], function(Item) {
         }),
     };
 
-    return Items;
-});
+export default Items;
+

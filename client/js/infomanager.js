@@ -1,5 +1,5 @@
-
-define(function() {
+import _ from 'underscore';
+import Class from './lib/class.js';
 
     var InfoManager = Class.extend({
         init: function(game) {
@@ -105,5 +105,5 @@ define(function() {
         }
     });
     
-    return InfoManager;
-});
+export default InfoManager;
+

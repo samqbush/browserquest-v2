@@ -1,5 +1,4 @@
-
-define(function() {
+import Class from './lib/class.js';
 
     var Animation = Class.extend({
         init: function(name, length, row, width, height) {
@@ -65,5 +64,5 @@ define(function() {
         }
     });
 
-    return Animation;
-});
+export default Animation;
+

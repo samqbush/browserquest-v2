@@ -1,5 +1,5 @@
+import Character from './character.js';
 
-define(['character'], function(Character) {
     
     var Mob = Character.extend({
         init: function(id, kind) {
@@ -10,5 +10,5 @@ define(['character'], function(Character) {
         }
     });
     
-    return Mob;
-});
+export default Mob;
+

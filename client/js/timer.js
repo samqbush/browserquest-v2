@@ -1,5 +1,4 @@
-
-define(function() {
+import Class from './lib/class.js';
 
     var Timer = Class.extend({
         init: function(duration, startTime) {
@@ -18,5 +17,5 @@ define(function() {
         }
     });
 
-    return Timer;
-});
+export default Timer;
+

@@ -1,5 +1,5 @@
-
-define(['npc'], function(Npc) {
+import Npc from './npc.js';
+import Types from 'shared/js/gametypes.js';
 
     var NPCs = {
 
@@ -102,5 +102,5 @@ define(['npc'], function(Npc) {
         })
     };
     
-    return NPCs;
-});
+export default NPCs;
+
