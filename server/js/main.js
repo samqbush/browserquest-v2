@@ -53,6 +53,7 @@ function main(config) {
             connect();
         } else {
             log.error("All worlds are full; refusing connection.");
+            connection.close("All worlds are full; refusing connection.");
         }
     });
 
