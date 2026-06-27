@@ -1,5 +1,5 @@
 
-var Log = require('log'),
+var Log = require('../../server/js/log'),
     _ = require('underscore'),
     log = new Log(Log.DEBUG),
     Types = require("../../shared/js/gametypes");

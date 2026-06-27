@@ -1,13 +1,22 @@
 
 var Utils = {},
-    sanitizer = require('sanitizer'),
+    xss = require('xss'),
     Types = require("../../shared/js/gametypes");
 
 module.exports = Utils;
 
+// Neutralize all HTML by escaping tags to inert entities (empty whitelist) and
+// dropping the contents of dangerous tags. The client renders chat/names via
+// jQuery `.html()` (client/js/bubble.js), so output must never be interpretable
+// as markup. Escaping (rather than stripping) preserves legitimate text such as
+// "<3" or "a < b".
+var xssFilter = new xss.FilterXSS({
+    whiteList: {},
+    stripIgnoreTagBody: ['script', 'style'],
+});
+
 Utils.sanitize = function(string) {
-    // Strip unsafe tags, then escape as html entities.
-    return sanitizer.escape(sanitizer.sanitize(string));
+    return xssFilter.process(string);
 };
 
 Utils.random = function(range) {

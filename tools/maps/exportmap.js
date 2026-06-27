@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var util = require('util'),
-    Log = require('log'),
+    Log = require('../../server/js/log'),
     path = require("path"),
     fs = require("fs"),
     processMap = require('./processmap'),
