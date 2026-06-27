@@ -6,7 +6,7 @@ var fs = require('fs'),
 function main(config) {
     var ws = require("./ws"),
         WorldServer = require("./worldserver"),
-        Log = require('log'),
+        Log = require('./log'),
         _ = require('underscore'),
         server = new ws.MultiVersionWebsocketServer(config.port),
         metrics = config.metrics_enabled ? new Metrics(config) : null;
