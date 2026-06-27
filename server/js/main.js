@@ -7,20 +7,16 @@ function main(config) {
     var ws = require("./ws"),
         WorldServer = require("./worldserver"),
         Log = require('./log'),
-        _ = require('underscore'),
         server = new ws.MultiVersionWebsocketServer(config.port),
-        metrics = config.metrics_enabled ? new Metrics(config) : null;
+        metrics = new Metrics(config),
         worlds = [],
         lastTotalPlayers = 0,
         checkPopulationInterval = setInterval(function() {
-            if(metrics && metrics.isReady) {
-                metrics.getTotalPlayers(function(totalPlayers) {
-                    if(totalPlayers !== lastTotalPlayers) {
-                        lastTotalPlayers = totalPlayers;
-                        _.each(worlds, function(world) {
-                            world.updatePopulation(totalPlayers);
-                        });
-                    }
+            var totalPlayers = metrics.getTotalPlayers(worlds);
+            if(config.metrics_enabled && totalPlayers !== lastTotalPlayers) {
+                lastTotalPlayers = totalPlayers;
+                worlds.forEach(function(world) {
+                    world.updatePopulation(totalPlayers);
                 });
             }
         }, 1000);
@@ -44,20 +40,19 @@ function main(config) {
                 }
             };
         
-        if(metrics) {
-            metrics.getOpenWorldCount(function(open_world_count) {
-                // choose the least populated world among open worlds
-                world = _.min(_.first(worlds, open_world_count), function(w) { return w.playerCount; });
-                connect();
-            });
-        }
-        else {
-            // simply fill each world sequentially until they are full
-            world = _.detect(worlds, function(world) {
-                return world.playerCount < config.nb_players_per_world;
-            });
+        // Choose the least populated world among those that still have capacity.
+        var openWorlds = worlds.filter(function(w) {
+            return w.playerCount < config.nb_players_per_world;
+        });
+        world = openWorlds.reduce(function(least, w) {
+            return (least && least.playerCount <= w.playerCount) ? least : w;
+        }, null);
+        
+        if(world) {
             world.updatePopulation();
             connect();
+        } else {
+            log.error("All worlds are full; refusing connection.");
         }
     });
 
@@ -67,32 +62,32 @@ function main(config) {
     
     var onPopulationChange = function() {
         metrics.updatePlayerCounters(worlds, function(totalPlayers) {
-            _.each(worlds, function(world) {
-                world.updatePopulation(totalPlayers);
-            });
+            if(config.metrics_enabled) {
+                worlds.forEach(function(world) {
+                    world.updatePopulation(totalPlayers);
+                });
+            }
         });
-        metrics.updateWorldDistribution(getWorldDistribution(worlds));
     };
 
-    _.each(_.range(config.nb_worlds), function(i) {
+    for(var i = 0; i < config.nb_worlds; i += 1) {
         var world = new WorldServer('world'+ (i+1), config.nb_players_per_world, server);
         world.run(config.map_filepath);
         worlds.push(world);
-        if(metrics) {
-            world.onPlayerAdded(onPopulationChange);
-            world.onPlayerRemoved(onPopulationChange);
-        }
-    });
+        world.onPlayerAdded(onPopulationChange);
+        world.onPlayerRemoved(onPopulationChange);
+    }
     
     server.onRequestStatus(function() {
         return JSON.stringify(getWorldDistribution(worlds));
     });
     
-    if(config.metrics_enabled) {
-        metrics.ready(function() {
-            onPopulationChange(); // initialize all counters to 0 when the server starts
-        });
-    }
+    server.onRequestMetrics(function() {
+        return metrics.getMetrics();
+    }, metrics.getContentType());
+    
+    // Initialize all counters when the server starts.
+    onPopulationChange();
     
     process.on('uncaughtException', function (e) {
         log.error('uncaughtException: ' + e);
@@ -102,7 +97,7 @@ function main(config) {
 function getWorldDistribution(worlds) {
     var distribution = [];
     
-    _.each(worlds, function(world) {
+    worlds.forEach(function(world) {
         distribution.push(world.playerCount);
     });
     return distribution;

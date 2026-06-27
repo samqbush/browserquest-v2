@@ -1,7 +1,6 @@
 import Entity from './entity.js';
 import Transition from './transition.js';
 import Timer from './timer.js';
-import _ from 'underscore';
 import log from './lib/log.js';
 import Types from 'shared/js/gametypes.js';
 
@@ -76,7 +75,7 @@ import Types from 'shared/js/gametypes.js';
             	this.flipSpriteX = false;
         	    this.flipSpriteY = false;
 	    
-        	    if(_.indexOf(oriented, animation) >= 0) {
+        	    if(oriented.indexOf(animation) >= 0) {
         	        animation += "_" + (o === Types.Orientations.LEFT ? "right" : Types.getOrientationAsString(o));
         	        this.flipSpriteX = (this.orientation === Types.Orientations.LEFT) ? true : false;
         	    }
@@ -431,7 +430,7 @@ import Types from 'shared/js/gametypes.js';
          * @param {Function} callback Function which must accept one character argument.
          */
         forEachAttacker: function(callback) {
-            _.each(this.attackers, function(attacker) {
+            Object.values(this.attackers).forEach(function(attacker) {
                 callback(attacker);
             });
         },

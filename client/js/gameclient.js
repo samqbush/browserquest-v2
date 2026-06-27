@@ -1,7 +1,6 @@
 import Player from './player.js';
 import EntityFactory from './entityfactory.js';
 import BISON from './lib/bison.js';
-import _ from 'underscore';
 import Class from './lib/class.js';
 import log from './lib/log.js';
 import Types from 'shared/js/gametypes.js';
@@ -151,7 +150,7 @@ import $ from 'jquery';
     
         receiveAction: function(data) {
             var action = data[0];
-            if(this.handlers[action] && _.isFunction(this.handlers[action])) {
+            if(this.handlers[action] && typeof this.handlers[action] === 'function') {
                 this.handlers[action].call(this, data);
             }
             else {
@@ -162,7 +161,7 @@ import $ from 'jquery';
         receiveActionBatch: function(actions) {
             var self = this;
 
-            _.each(actions, function(action) {
+            actions.forEach(function(action) {
                 self.receiveAction(action);
             });
         },

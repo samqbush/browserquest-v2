@@ -1,5 +1,4 @@
 import Area from './area.js';
-import _ from 'underscore';
 import Class from './lib/class.js';
 import log from './lib/log.js';
 
@@ -17,9 +16,9 @@ import log from './lib/log.js';
             this.soundNames = ["loot", "hit1", "hit2", "hurt", "heal", "chat", "revive", "death", "firefox", "achievement", "kill1", "kill2", "noloot", "teleport", "chest", "npc", "npc-end"];
             
             var loadSoundFiles = function() {
-                var counter = _.size(self.soundNames);
+                var counter = self.soundNames.length;
                 log.info("Loading sound files...");
-                _.each(self.soundNames, function(name) { self.loadSound(name, function() {
+                self.soundNames.forEach(function(name) { self.loadSound(name, function() {
                         counter -= 1;
                         if(counter === 0) {
                             if(!Detect.isSafari()) { // Disable music on Safari - See bug 738008
@@ -36,7 +35,7 @@ import log from './lib/log.js';
                     // Load the village music first, as players always start here
                     self.loadMusic(self.musicNames.shift(), function() {
                         // Then, load all the other music files
-                        _.each(self.musicNames, function(name) {
+                        self.musicNames.forEach(function(name) {
                             self.loadMusic(name);
                         });
                     });
@@ -91,9 +90,9 @@ import log from './lib/log.js';
             sound.load();
         
             this.sounds[name] = [sound];
-            _.times(channels - 1, function() {
+            for(var i = 0; i < channels - 1; i += 1) {
                 self.sounds[name].push(sound.cloneNode(true));
-            });
+            }
         },
     
         loadSound: function(name, handleLoaded) {
@@ -111,7 +110,7 @@ import log from './lib/log.js';
             if(!this.sounds[name]) {
                 return null;
             }
-            var sound = _.detect(this.sounds[name], function(sound) {
+            var sound = this.sounds[name].find(function(sound) {
                 return sound.ended || sound.paused;
             });
             if(sound && sound.ended) {
@@ -137,7 +136,7 @@ import log from './lib/log.js';
     
         getSurroundingMusic: function(entity) {
             var music = null,
-                area = _.detect(this.areas, function(area) {
+                area = this.areas.find(function(area) {
                     return area.contains(entity);
                 });
         

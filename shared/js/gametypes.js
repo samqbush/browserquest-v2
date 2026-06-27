@@ -1,6 +1,4 @@
 
-var _ = require('underscore');
-
 var Types = {
     Messages: {
         HELLO: 0,
@@ -183,11 +181,11 @@ Types.rankedArmors = [
 ];
 
 Types.getWeaponRank = function(weaponKind) {
-    return _.indexOf(Types.rankedWeapons, weaponKind);
+    return Types.rankedWeapons.indexOf(weaponKind);
 };
 
 Types.getArmorRank = function(armorKind) {
-    return _.indexOf(Types.rankedArmors, armorKind);
+    return Types.rankedArmors.indexOf(armorKind);
 };
 
 Types.isPlayer = function(kind) {
@@ -293,18 +291,18 @@ Types.getOrientationAsString = function(orientation) {
 };
 
 Types.getRandomItemKind = function(item) {
-    var all = _.union(this.rankedWeapons, this.rankedArmors),
+    var all = this.rankedWeapons.concat(this.rankedArmors),
         forbidden = [Types.Entities.SWORD1, Types.Entities.CLOTHARMOR],
-        itemKinds = _.difference(all, forbidden),
-        i = Math.floor(Math.random() * _.size(itemKinds));
+        itemKinds = all.filter(function(kind) { return forbidden.indexOf(kind) === -1; }),
+        i = Math.floor(Math.random() * itemKinds.length);
     
     return itemKinds[i];
 };
 
 Types.getMessageTypeAsString = function(type) {
     var typeName;
-    _.each(Types.Messages, function(value, name) {
-        if(value === type) {
+    Object.keys(Types.Messages).forEach(function(name) {
+        if(Types.Messages[name] === type) {
             typeName = name;
         }
     });

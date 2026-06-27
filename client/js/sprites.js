@@ -1,4 +1,3 @@
-import _ from 'underscore';
 
 // Eagerly import every sprite definition JSON. Replaces the legacy RequireJS
 // `text!` plugin that listed each file explicitly. Vite resolves the glob at
@@ -10,7 +9,7 @@ var spriteModules = import.meta.glob('../sprites/*.json', {
 
 var sprites = {};
 
-_.each(spriteModules, function(sprite) {
+Object.values(spriteModules).forEach(function(sprite) {
     if (sprite && sprite.id) {
         sprites[sprite.id] = sprite;
     }

@@ -1,4 +1,3 @@
-import _ from 'underscore';
 import Class from './lib/class.js';
 
     var InfoManager = Class.extend({
@@ -23,7 +22,7 @@ import Class from './lib/class.js';
         forEachInfo: function(callback) {
             var self = this;
         
-            _.each(this.infos, function(info, id) {
+            Object.values(this.infos).forEach(function(info) {
                 callback(info);
             });
         },
@@ -35,7 +34,7 @@ import Class from './lib/class.js';
                 info.update(time);
             });
         
-            _.each(this.destroyQueue, function(id) {
+            this.destroyQueue.forEach(function(id) {
                 delete self.infos[id];
             });
             this.destroyQueue = [];

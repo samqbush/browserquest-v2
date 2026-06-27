@@ -1,4 +1,3 @@
-import _ from 'underscore';
 import rawMapData from '../maps/world_client.json';
 
 // Clone the imported map data so we never mutate the shared module object.
@@ -20,12 +19,12 @@ function generateCollisionGrid() {
         }
     }
 
-    _.each(mapData.collisions, function(tileIndex) {
+    (mapData.collisions || []).forEach(function(tileIndex) {
         var pos = tileIndexToGridPosition(tileIndex+1);
         mapData.grid[pos.y][pos.x] = 1;
     });
 
-    _.each(mapData.blocking, function(tileIndex) {
+    (mapData.blocking || []).forEach(function(tileIndex) {
         var pos = tileIndexToGridPosition(tileIndex+1);
         if(mapData.grid[pos.y] !== undefined) {
             mapData.grid[pos.y][pos.x] = 1;
@@ -40,7 +39,7 @@ function generatePlateauGrid() {
     for(var	j, i = 0; i < mapData.height; i++) {
         mapData.plateauGrid[i] = [];
         for(j = 0; j < mapData.width; j++) {
-            if(_.include(mapData.plateau, tileIndex)) {
+            if((mapData.plateau || []).includes(tileIndex)) {
                 mapData.plateauGrid[i][j] = 1;
             } else {
                 mapData.plateauGrid[i][j] = 0;

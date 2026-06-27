@@ -1,6 +1,5 @@
 
 var cls = require("./lib/class"),
-    _ = require("underscore"),
     Log = require('./log'),
     Entity = require('./entity'),
     Character = require('./character'),
@@ -156,7 +155,7 @@ module.exports = World = cls.Class.extend({
             self.map.generateCollisionGrid();
             
             // Populate all mob "roaming" areas
-            _.each(self.map.mobAreas, function(a) {
+            (self.map.mobAreas || []).forEach(function(a) {
                 var area = new MobArea(a.id, a.nb, a.type, a.x, a.y, a.width, a.height, self);
                 area.spawnMobs();
                 area.onEmpty(self.handleEmptyMobArea.bind(self, area));
@@ -165,14 +164,14 @@ module.exports = World = cls.Class.extend({
             });
             
             // Create all chest areas
-            _.each(self.map.chestAreas, function(a) {
+            (self.map.chestAreas || []).forEach(function(a) {
                 var area = new ChestArea(a.id, a.x, a.y, a.w, a.h, a.tx, a.ty, a.i, self);
                 self.chestAreas.push(area);
                 area.onEmpty(self.handleEmptyChestArea.bind(self, area));
             });
             
             // Spawn static chests
-            _.each(self.map.staticChests, function(chest) {
+            (self.map.staticChests || []).forEach(function(chest) {
                 var c = self.createChest(chest.x, chest.y, chest.i);
                 self.addStaticItem(c);
             });
@@ -181,7 +180,7 @@ module.exports = World = cls.Class.extend({
             self.spawnStaticEntities();
             
             // Set maximum number of entities contained in each chest area
-            _.each(self.chestAreas, function(area) {
+            self.chestAreas.forEach(function(area) {
                 area.setNumberOfEntities(area.entities.length);
             });
         });
@@ -237,9 +236,9 @@ module.exports = World = cls.Class.extend({
         var entities;
         
         if(player && (player.group in this.groups)) {
-            entities = _.keys(this.groups[player.group].entities);
-            entities = _.reject(entities, function(id) { return id == player.id; });
-            entities = _.map(entities, function(id) { return parseInt(id); });
+            entities = Object.keys(this.groups[player.group].entities);
+            entities = entities.filter(function(id) { return id != player.id; });
+            entities = entities.map(function(id) { return parseInt(id); });
             if(entities) {
                 this.pushToPlayer(player, new Messages.List(entities));
             }
@@ -249,14 +248,14 @@ module.exports = World = cls.Class.extend({
     pushSpawnsToPlayer: function(player, ids) {
         var self = this;
         
-        _.each(ids, function(id) {
+        ids.forEach(function(id) {
             var entity = self.getEntityById(id);
             if(entity) {
                 self.pushToPlayer(player, new Messages.Spawn(entity));
             }
         });
         
-        log.debug("Pushed "+_.size(ids)+" new spawns to "+player.id);
+        log.debug("Pushed "+ids.length+" new spawns to "+player.id);
     },
     
     pushToPlayer: function(player, message) {
@@ -272,7 +271,7 @@ module.exports = World = cls.Class.extend({
             group = this.groups[groupId];
         
         if(group) {
-            _.each(group.players, function(playerId) {
+            group.players.forEach(function(playerId) {
                 if(playerId != ignoredPlayer) {
                     self.pushToPlayer(self.getEntityById(playerId), message);
                 }
@@ -294,7 +293,7 @@ module.exports = World = cls.Class.extend({
         
         // Push this message to all groups which are not going to be updated anymore,
         // since the player left them.
-        _.each(player.recentlyLeftGroups, function(id) {
+        player.recentlyLeftGroups.forEach(function(id) {
             self.pushToGroup(id, message);
         });
         player.recentlyLeftGroups = [];
@@ -430,7 +429,7 @@ module.exports = World = cls.Class.extend({
     clearMobHateLinks: function(mob) {
         var self = this;
         if(mob) {
-            _.each(mob.hatelist, function(obj) {
+            mob.hatelist.forEach(function(obj) {
                 var player = self.getEntityById(obj.id);
                 if(player) {
                     player.removeHater(mob);
@@ -571,8 +570,9 @@ module.exports = World = cls.Class.extend({
         var self = this,
             count = 0;
         
-        _.each(this.map.staticEntities, function(kindName, tid) {
-            var kind = Types.getKindFromString(kindName),
+        Object.keys(this.map.staticEntities).forEach(function(tid) {
+            var kindName = self.map.staticEntities[tid],
+                kind = Types.getKindFromString(kindName),
                 pos = self.map.tileIndexToGridPosition(tid);
             
             if(Types.isNpc(kind)) {
@@ -598,7 +598,7 @@ module.exports = World = cls.Class.extend({
     },
 
     isValidPosition: function(x, y) {
-        if(this.map && _.isNumber(x) && _.isNumber(y) && !this.map.isOutOfBounds(x, y) && !this.map.isColliding(x, y)) {
+        if(this.map && typeof x === 'number' && typeof y === 'number' && !this.map.isOutOfBounds(x, y) && !this.map.isColliding(x, y)) {
             return true;
         }
         return false;
@@ -614,7 +614,7 @@ module.exports = World = cls.Class.extend({
             self.chooseMobTarget(mob, 2);
         });
         
-        _.each(previousAttackers, function(mob) {
+        previousAttackers.forEach(function(mob) {
             player.removeAttacker(mob);
             mob.clearTarget();
             mob.forgetPlayer(player.id, 1000);
@@ -692,7 +692,7 @@ module.exports = World = cls.Class.extend({
             
             var group = this.groups[entity.group];
             if(entity instanceof Player) {
-                group.players = _.reject(group.players, function(id) { return id === entity.id; });
+                group.players = group.players.filter(function(id) { return id !== entity.id; });
             }
             
             this.map.forEachAdjacentGroup(entity.group, function(id) {
@@ -721,7 +721,7 @@ module.exports = World = cls.Class.extend({
                 var group = self.groups[id];
                 
                 if(group) {
-                    if(!_.include(group.entities, entity.id)
+                    if(!Object.values(group.entities).includes(entity.id)
                     //  Items dropped off of mobs are handled differently via DROP messages. See handleHurtEntity.
                     && (!isItem || isChest || (isItem && !isDroppedItem))) {
                         group.incoming.push(entity);
@@ -751,7 +751,7 @@ module.exports = World = cls.Class.extend({
     
     logGroupPlayers: function(groupId) {
         log.debug("Players inside group "+groupId+":");
-        _.each(this.groups[groupId].players, function(id) {
+        this.groups[groupId].players.forEach(function(id) {
             log.debug("- player "+id);
         });
     },
@@ -766,8 +766,8 @@ module.exports = World = cls.Class.extend({
                 var oldGroups = this.removeFromGroups(entity);
                 var newGroups = this.addToGroup(entity, groupId);
                 
-                if(_.size(oldGroups) > 0) {
-                    entity.recentlyLeftGroups = _.difference(oldGroups, newGroups);
+                if(oldGroups.length > 0) {
+                    entity.recentlyLeftGroups = oldGroups.filter(function(id) { return newGroups.indexOf(id) === -1; });
                     log.debug("group diff: " + entity.recentlyLeftGroups);
                 }
             }
@@ -782,7 +782,7 @@ module.exports = World = cls.Class.extend({
             this.map.forEachGroup(function(id) {
                 var spawns = [];
                 if(self.groups[id].incoming.length > 0) {
-                    spawns = _.each(self.groups[id].incoming, function(entity) {
+                    self.groups[id].incoming.forEach(function(entity) {
                         if(entity instanceof Player) {
                             self.pushToGroup(id, new Messages.Spawn(entity), entity.id);
                         } else {
@@ -843,7 +843,7 @@ module.exports = World = cls.Class.extend({
     },
     
     tryAddingMobToChestArea: function(mob) {
-        _.each(this.chestAreas, function(area) {
+        this.chestAreas.forEach(function(area) {
             if(area.contains(mob)) {
                 area.addToArea(mob);
             }

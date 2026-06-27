@@ -1,6 +1,5 @@
 
 var Area = require('./area'),
-    _ = require('underscore'),
     Types = require("../../shared/js/gametypes");
 
 module.exports = MobArea = Area.extend({
@@ -50,7 +49,7 @@ module.exports = MobArea = Area.extend({
         var self = this;
         
         setInterval(function() {
-            _.each(self.entities, function(mob) {
+            self.entities.forEach(function(mob) {
                 var canRoam = (Utils.random(20) === 1),
                     pos;
                 

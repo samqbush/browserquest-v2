@@ -1,6 +1,5 @@
 
 var cls = require('./lib/class'),
-    _ = require('underscore'),
     Utils = require('./utils'),
     Types = require("../../shared/js/gametypes");
 
@@ -29,7 +28,7 @@ module.exports = Area = cls.Class.extend({
     },
     
     removeFromArea: function(entity) {
-        var i = _.indexOf(_.pluck(this.entities, 'id'), entity.id);
+        var i = this.entities.map(function(e) { return e.id; }).indexOf(entity.id);
         this.entities.splice(i, 1);
         
         if(this.isEmpty() && this.hasCompletelyRespawned && this.empty_callback) {
@@ -57,11 +56,11 @@ module.exports = Area = cls.Class.extend({
     },
     
     isEmpty: function() {
-        return !_.any(this.entities, function(entity) { return !entity.isDead });
+        return !this.entities.some(function(entity) { return !entity.isDead; });
     },
     
     isFull: function() {
-        return !this.isEmpty() && (this.nbEntities === _.size(this.entities));
+        return !this.isEmpty() && (this.nbEntities === this.entities.length);
     },
     
     onEmpty: function(callback) {

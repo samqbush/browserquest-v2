@@ -12,7 +12,7 @@ module.exports = Chest = Item.extend({
     },
     
     getRandomItem: function() {
-        var nbItems = _.size(this.items),
+        var nbItems = this.items.length,
             item = null;
 
         if(nbItems > 0) {

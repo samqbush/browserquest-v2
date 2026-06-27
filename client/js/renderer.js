@@ -3,7 +3,6 @@ import Item from './item.js';
 import Character from './character.js';
 import Player from './player.js';
 import Timer from './timer.js';
-import _ from 'underscore';
 import Class from './lib/class.js';
 import log from './lib/log.js';
 import Types from 'shared/js/gametypes.js';
@@ -206,7 +205,7 @@ import Types from 'shared/js/gametypes.js';
             if(positions) {
                 for(var i=0; i < positions.length; i += 1) {
                     for(var j=0; j < positions[i].length; j += 1) {
-                        if(!_.isNull(positions[i][j])) {
+                        if(positions[i][j] !== null) {
                             this.drawCellHighlight(i, j, "rgba(50, 50, 255, 0.5)");
                         }
                     }
@@ -289,8 +288,8 @@ import Types from 'shared/js/gametypes.js';
 
         drawScaledImage: function(ctx, image, x, y, w, h, dx, dy) {
             var s = this.upscaledRendering ? 1 : this.scale;
-            _.each(arguments, function(arg) {
-                if(_.isUndefined(arg) || _.isNaN(arg) || _.isNull(arg) || arg < 0) {
+            Array.prototype.forEach.call(arguments, function(arg) {
+                if(arg === undefined || Number.isNaN(arg) || arg === null || arg < 0) {
                     log.error("x:"+x+" y:"+y+" w:"+w+" h:"+h+" dx:"+dx+" dy:"+dy, true);
                     throw Error("A problem occured when trying to draw on the canvas");
                 }
