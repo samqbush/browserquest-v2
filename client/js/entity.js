@@ -1,5 +1,6 @@
-
-define(function() {
+import Class from './lib/class.js';
+import log from './lib/log.js';
+import Types from 'shared/js/gametypes.js';
 
     var Entity = Class.extend({
         init: function(id, kind) {
@@ -255,5 +256,5 @@ define(function() {
         }
     });
     
-    return Entity;
-});
+export default Entity;
+

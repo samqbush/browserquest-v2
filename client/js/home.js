@@ -1,4 +1,7 @@
+import './lib/class.js';
+import 'underscore';
+import './lib/stacktrace.js';
+import './util.js';
 
-define(['lib/class', 'lib/underscore.min', 'lib/stacktrace', 'util'], function() {
-    require(["main"]);
-});
+    import './main.js';
+

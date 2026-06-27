@@ -354,3 +354,5 @@ printStackTrace.implementation.prototype = {
         return '(?)';
     }
 };
+
+export default printStackTrace;

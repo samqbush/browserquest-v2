@@ -1,5 +1,5 @@
-
-define(function() {
+import Class from './lib/class.js';
+import log from './lib/log.js';
 
     var Transition = Class.extend({
         init: function() {
@@ -61,5 +61,5 @@ define(function() {
         }
     });
     
-    return Transition;
-});
+export default Transition;
+

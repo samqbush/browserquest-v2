@@ -1,5 +1,5 @@
-
-define(function() {
+import Class from './lib/class.js';
+import log from './lib/log.js';
 
     var Camera = Class.extend({
         init: function(renderer) {
@@ -79,5 +79,5 @@ define(function() {
         }
     });
 
-    return Camera;
-});
+export default Camera;
+

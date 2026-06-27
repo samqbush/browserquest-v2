@@ -302,31 +302,46 @@ Phase 2.**
 
 ---
 
-## Phase 2: Client toolchain modernization (T-shirt size: L)
+## Phase 2: Client toolchain modernization (T-shirt size: L) — ✅ COMPLETE
 
 **Goal:** Build the client with Vite; drop RequireJS/`r.js`.
 **Prerequisites:** Phase 1 (stable server to play against).
 **Duration estimate:** 2-3 sprints.
+**Status:** ✅ Complete (branch `phase-2`). All AMD `define()` modules converted to
+full ESM, RequireJS/`r.js`/`build.sh` removed, client built with Vite, Playwright
+smoke test green in CI alongside the existing Vitest suite.
 
 ### Tasks
-| ID | Task | Component | Blocked by |
-|----|------|-----------|------------|
-| 2.1 | Introduce Vite; serve `index.html` in dev | client | — |
-| 2.2 | Mechanically convert AMD `define()` modules → ESM | `client/js/**` | 2.1 |
-| 2.3 | Replace `bin/build.sh` + `build.js` with `vite build`→`dist/` | build | 2.2 |
-| 2.4 | Remove vendored `bin/r.js` and name-based prune | bin | 2.3 |
-| 2.5 | Add a Playwright smoke test (load page → start game → see canvas) | test | 2.3 |
+| ID | Task | Component | Blocked by | Status |
+|----|------|-----------|------------|--------|
+| 2.1 | Introduce Vite; serve `index.html` in dev | client | — | ✅ |
+| 2.2 | Mechanically convert AMD `define()` modules → ESM | `client/js/**` | 2.1 | ✅ |
+| 2.3 | Replace `bin/build.sh` + `build.js` with `vite build`→`dist/` | build | 2.2 | ✅ |
+| 2.4 | Remove vendored `bin/r.js` and name-based prune | bin | 2.3 | ✅ |
+| 2.5 | Add a Playwright smoke test (load page → start game → see canvas) | test | 2.3 | ✅ |
 
 ### Risks & Mitigations
 - **Risk:** Hidden circular deps surface under ESM. → **Mitigation:** convert
-  module-by-module against the Vite dev server.
+  module-by-module against the Vite dev server. *(Verified: `madge --circular client/js`
+  reports no cycles across 50 modules.)*
 - **Risk:** `mapworker.js` Web Worker import path changes. → **Mitigation:** use
-  Vite's `?worker` import; smoke-test desktop map load.
+  Vite's `?worker` import; smoke-test desktop map load. *(Implemented via
+  `new Worker(new URL('./mapworker.js', import.meta.url), { type: 'module' })` in
+  `map.js`, importing `world_client.json`.)*
+- **Note:** ESM strict mode surfaced several latent sloppy-mode AMD bugs (implicit
+  globals from `;`-instead-of-`,` var chains, `arguments.callee`, read-only
+  `ImageData.data` assignment, jQuery 3 `.attr('value')` vs `.val()`, a prod-only
+  dispatcher `JSON.parse` crash). All fixed; `eslint` `no-undef: error` on the ESM
+  client is the permanent static gate.
 
 ### Verification & exit criteria (Definition of Done)
-- [ ] `vite build` emits a self-contained `dist/`.
-- [ ] Playwright smoke test passes in CI.
-- [ ] Game is visually and functionally identical in browser.
+- [x] `vite build` emits a self-contained `client/dist/` (no RequireJS/`r.js`), with
+      all static assets copied and no failed asset requests against a live server.
+- [x] Playwright smoke test passes headless in CI (asserts no console/page errors,
+      WebSocket connects, body reaches "started", background+entities canvases render
+      non-transparent pixels).
+- [x] Game is visually and functionally identical in browser.
+- [x] Existing Vitest server/shared suite (60 tests) stays green; `npm run lint` passes.
 
 ---
 

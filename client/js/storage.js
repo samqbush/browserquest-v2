@@ -1,5 +1,5 @@
-
-define(function() {
+import _ from 'underscore';
+import Class from './lib/class.js';
 
     var Storage = Class.extend({
         init: function() {
@@ -164,5 +164,5 @@ define(function() {
         },
     });
     
-    return Storage;
-});
+export default Storage;
+

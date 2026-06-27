@@ -9,8 +9,10 @@ Function.prototype.bind = function (bind) {
 var isInt = function(n) {
     return (n % 1) === 0;
 };
+window.isInt = isInt;
 
 var TRANSITIONEND = 'transitionend webkitTransitionEnd oTransitionEnd';
+window.TRANSITIONEND = TRANSITIONEND;
 
 // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 window.requestAnimFrame = (function(){

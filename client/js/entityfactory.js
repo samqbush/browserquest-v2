@@ -1,5 +1,11 @@
-
-define(['mobs', 'items', 'npcs', 'warrior', 'chest'], function(Mobs, Items, NPCs, Warrior, Chest) {
+import Mobs from './mobs.js';
+import Items from './items.js';
+import NPCs from './npcs.js';
+import Warrior from './warrior.js';
+import Chest from './chest.js';
+import _ from 'underscore';
+import log from './lib/log.js';
+import Types from 'shared/js/gametypes.js';
 
     var EntityFactory = {};
 
@@ -208,5 +214,5 @@ define(['mobs', 'items', 'npcs', 'warrior', 'chest'], function(Mobs, Items, NPCs
         return new NPCs.LavaNpc(id);
     };
     
-    return EntityFactory;
-});
+export default EntityFactory;
+

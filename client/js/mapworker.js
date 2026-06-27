@@ -1,16 +1,17 @@
+import _ from 'underscore';
+import rawMapData from '../maps/world_client.json';
 
-importScripts('../maps/world_client.js', 'lib/underscore.min.js');
+// Clone the imported map data so we never mutate the shared module object.
+var mapData = JSON.parse(JSON.stringify(rawMapData));
 
 onmessage = function (event) {
     generateCollisionGrid();
     generatePlateauGrid();
-    
+
     postMessage(mapData);
 };
 
 function generateCollisionGrid() {
-    var tileIndex = 0;
-
     mapData.grid = [];
     for(var	j, i = 0; i < mapData.height; i++) {
         mapData.grid[i] = [];
@@ -23,7 +24,7 @@ function generateCollisionGrid() {
         var pos = tileIndexToGridPosition(tileIndex+1);
         mapData.grid[pos.y][pos.x] = 1;
     });
-    
+
     _.each(mapData.blocking, function(tileIndex) {
         var pos = tileIndexToGridPosition(tileIndex+1);
         if(mapData.grid[pos.y] !== undefined) {

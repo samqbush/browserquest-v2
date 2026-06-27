@@ -1,5 +1,6 @@
-
-define(['mob', 'timer'], function(Mob, Timer) {
+import Mob from './mob.js';
+import Timer from './timer.js';
+import Types from 'shared/js/gametypes.js';
 
     var Mobs = {
         Rat: Mob.extend({
@@ -156,5 +157,5 @@ define(['mob', 'timer'], function(Mob, Timer) {
         })
     };
 
-    return Mobs;
-});
+export default Mobs;
+

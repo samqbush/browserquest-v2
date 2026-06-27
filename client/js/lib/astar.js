@@ -1,5 +1,5 @@
 
-define(function() {
+// Converted from AMD define() to ES module.
 
     var AStar = (function () {
 
@@ -147,5 +147,4 @@ define(function() {
 
     }());
     
-    return AStar;
-});
+    export default AStar;

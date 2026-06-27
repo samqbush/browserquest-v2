@@ -1,5 +1,10 @@
+import $ from 'jquery';
+import Area from './area.js';
+import _ from 'underscore';
+import Class from './lib/class.js';
+import log from './lib/log.js';
+import Types from 'shared/js/gametypes.js';
 
-define(['jquery', 'area'], function($, Area) {
     
     var Map = Class.extend({
         init: function(loadMultiTilesheets, game) {
@@ -31,7 +36,7 @@ define(['jquery', 'area'], function($, Area) {
         	
         	if(useWorker) {
         	    log.info("Loading map with web worker.");
-                var worker = new Worker('js/mapworker.js');
+                var worker = new Worker(new URL('./mapworker.js', import.meta.url), { type: 'module' });
                 worker.postMessage(1);
             
                 worker.onmessage = function(event) {
@@ -305,5 +310,5 @@ define(['jquery', 'area'], function($, Area) {
         }
     });
     
-    return Map;
-});
+export default Map;
+

@@ -7,14 +7,20 @@
   },
   "scripts": {
     "start": "node server/js/main.js",
+    "dev": "vite",
+    "preview": "vite preview",
+    "build:client": "vite build",
+    "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "bash bin/build.sh"
+    "madge": "madge --circular client/js"
   },
   "dependencies": {
+    "jquery": "^3.7.1",
     "pino": "^10.3.1",
     "underscore": "1.13.8",
     "ws": "^8.21.0",
@@ -25,9 +31,12 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
     "eslint": "^10.6.0",
     "globals": "^17.7.0",
+    "madge": "^8.0.0",
     "prettier": "^3.8.5",
+    "vite": "^7.3.6",
     "vitest": "^4.1.9"
   }
 }

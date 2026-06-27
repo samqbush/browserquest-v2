@@ -1,6 +1,12 @@
-
-define(['camera', 'item', 'character', 'player', 'timer'], 
-function(Camera, Item, Character, Player, Timer) {
+import Camera from './camera.js';
+import Item from './item.js';
+import Character from './character.js';
+import Player from './player.js';
+import Timer from './timer.js';
+import _ from 'underscore';
+import Class from './lib/class.js';
+import log from './lib/log.js';
+import Types from 'shared/js/gametypes.js';
 
     var Renderer = Class.extend({
         init: function(game, canvas, background, foreground) {
@@ -400,7 +406,7 @@ function(Camera, Item, Character, Player, Timer) {
         
                     if(weapon) {
                         var weaponAnimData = weapon.animationData[anim.name],
-                            index = frame.index < weaponAnimData.length ? frame.index : frame.index % weaponAnimData.length;
+                            index = frame.index < weaponAnimData.length ? frame.index : frame.index % weaponAnimData.length,
                             wx = weapon.width * index * os,
                             wy = weapon.height * anim.row * os,
                             ww = weapon.width * os,
@@ -468,7 +474,7 @@ function(Camera, Item, Character, Player, Timer) {
             });
             
             if(this.game.clearTarget && this.lastTargetPos) {
-                var last = this.lastTargetPos;
+                var last = this.lastTargetPos,
                     rect = this.getTargetBoundingRect(last.x, last.y);
                 
                 this.clearDirtyRect(rect);
@@ -688,7 +694,7 @@ function(Camera, Item, Character, Player, Timer) {
     	        shadow = this.game.shadows["small"],
     	        sw = shadow.width * os,
     	        sh = shadow.height * os,
-    	        ox = -sprite.offsetX * os;
+    	        ox = -sprite.offsetX * os,
     	        oy = -sprite.offsetY * os;
 	    
     	    canvas.width = w;
@@ -779,5 +785,5 @@ function(Camera, Item, Character, Player, Timer) {
         return (id % w == 0) ? w - 1 : (id % w) - 1;
     };
     
-    return Renderer;
-});
+export default Renderer;
+

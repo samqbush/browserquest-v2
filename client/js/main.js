@@ -1,5 +1,8 @@
+import $ from 'jquery';
+import App from './app.js';
+import _ from 'underscore';
+import log from './lib/log.js';
 
-define(['jquery', 'app'], function($, App) {
     var app, game;
 
     var initApp = function() {
@@ -145,7 +148,7 @@ define(['jquery', 'app'], function($, App) {
     		}
     		
     		$('.play div').click(function(event) {
-                var nameFromInput = $('#nameinput').attr('value'),
+                var nameFromInput = $('#nameinput').val(),
                     nameFromStorage = $('#playername').html(),
                     name = nameFromInput || nameFromStorage;
                 
@@ -165,7 +168,8 @@ define(['jquery', 'app'], function($, App) {
     };
     
     var initGame = function() {
-        require(['game'], function(Game) {
+        import('./game.js').then(function(gameModule) {
+            var Game = gameModule.default;
             
             var canvas = document.getElementById("entities"),
         	    background = document.getElementById("background"),
@@ -241,8 +245,8 @@ define(['jquery', 'app'], function($, App) {
 	
             app.initHealthBar();
 	
-            $('#nameinput').attr('value', '');
-    		$('#chatbox').attr('value', '');
+            $('#nameinput').val('');
+    		$('#chatbox').val('');
     		
         	if(game.renderer.mobile || game.renderer.tablet) {
                 $('#foreground').bind('touchstart', function(event) {
@@ -321,11 +325,11 @@ define(['jquery', 'app'], function($, App) {
                     $chat = $('#chatinput');
 
                 if(key === 13) {
-                    if($chat.attr('value') !== '') {
+                    if($chat.val() !== '') {
                         if(game.player) {
-                            game.say($chat.attr('value'));
+                            game.say($chat.val());
                         }
-                        $chat.attr('value', '');
+                        $chat.val('');
                         app.hideChat();
                         $('#foreground').focus();
                         return false;
@@ -343,7 +347,7 @@ define(['jquery', 'app'], function($, App) {
 
             $('#nameinput').keypress(function(event) {
                 var $name = $('#nameinput'),
-                    name = $name.attr('value');
+                    name = $name.val();
 
                 if(event.keyCode === 13) {
                     if(name !== '') {
@@ -406,4 +410,4 @@ define(['jquery', 'app'], function($, App) {
     };
     
     initApp();
-});
+

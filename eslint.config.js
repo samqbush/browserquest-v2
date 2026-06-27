@@ -21,6 +21,9 @@ module.exports = [
       'node_modules/**',
       'client-build/**',
       'dist/**',
+      'client/dist/**',
+      'playwright-report/**',
+      'test-results/**',
       'bin/r.js',
       'client/js/lib/**',
       'client/js/build.js',
@@ -31,21 +34,33 @@ module.exports = [
 
   // New code: tests run as ES modules, held to recommended rules as errors.
   {
-    files: ['test/**/*.js', 'test/**/*.mjs'],
+    files: ['test/**/*.js', 'test/**/*.mjs', 'tests/**/*.js'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
+      globals: { ...globals.node, ...globals.browser },
+    },
+    rules: js.configs.recommended.rules,
+  },
+
+  // CommonJS tooling/config files (use require()).
+  {
+    files: ['eslint.config.js', 'vitest.config.js'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'commonjs',
       globals: { ...globals.node },
     },
     rules: js.configs.recommended.rules,
   },
 
-  // Tooling/config files: CommonJS, Node globals.
+  // ESM tooling/config files (Vite + Playwright use import/export and
+  // import.meta).
   {
-    files: ['eslint.config.js', 'vitest.config.js', '*.config.js'],
+    files: ['vite.config.js', 'playwright.config.js'],
     languageOptions: {
       ecmaVersion: 2023,
-      sourceType: 'commonjs',
+      sourceType: 'module',
       globals: { ...globals.node },
     },
     rules: js.configs.recommended.rules,
@@ -69,26 +84,31 @@ module.exports = [
     rules: legacyWarnRules,
   },
 
-  // Legacy client: browser + RequireJS AMD with leaked globals.
+  // Phase 2 client: full ESM modules (Vite). Implicit globals are real bugs
+  // under module strict mode, so no-undef is an error here. Only genuinely
+  // global symbols are the classic pre-entry libs (Detect/Modernizr) loaded
+  // via <script> tags before the module entry.
   {
     files: ['client/**/*.js'],
     languageOptions: {
-      ecmaVersion: 2018,
-      sourceType: 'script',
+      ecmaVersion: 2022,
+      sourceType: 'module',
       globals: {
         ...globals.browser,
-        define: 'readonly',
-        require: 'readonly',
-        requirejs: 'readonly',
-        Class: 'writable',
-        Types: 'writable',
+        ...globals.worker,
+        Detect: 'readonly',
         Modernizr: 'readonly',
-        _: 'readonly',
-        $: 'readonly',
-        jQuery: 'readonly',
-        log: 'writable',
+        // Globals installed on `window` by util.js (imported for side effects).
+        isInt: 'readonly',
+        TRANSITIONEND: 'readonly',
+        requestAnimFrame: 'readonly',
+        // Legacy browser transport global (guarded fallback in gameclient.js).
+        MozWebSocket: 'readonly',
       },
     },
-    rules: legacyWarnRules,
+    rules: {
+      ...legacyWarnRules,
+      'no-undef': 'error',
+    },
   },
 ];

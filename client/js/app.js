@@ -1,5 +1,8 @@
-
-define(['jquery', 'storage'], function($, Storage) {
+import $ from 'jquery';
+import Storage from './storage.js';
+import _ from 'underscore';
+import Class from './lib/class.js';
+import log from './lib/log.js';
 
     var App = Class.extend({
         init: function() {
@@ -89,23 +92,20 @@ define(['jquery', 'storage'], function($, Storage) {
                 var optionsSet = false,
                     config = this.config;
 
-                //>>includeStart("devHost", pragmas.devHost);
-                if(config.local) {
-                    log.debug("Starting game with local dev config.");
-                    this.game.setServerOptions(config.local.host, config.local.port, username);
-                } else {
-                    log.debug("Starting game with default dev config.");
-                    this.game.setServerOptions(config.dev.host, config.dev.port, username);
-                }
-                optionsSet = true;
-                //>>includeEnd("devHost");
-                
-                //>>includeStart("prodHost", pragmas.prodHost);
-                if(!optionsSet) {
+                if(import.meta.env.PROD) {
                     log.debug("Starting game with build config.");
                     this.game.setServerOptions(config.build.host, config.build.port, username);
+                    optionsSet = true;
+                } else {
+                    if(config.local) {
+                        log.debug("Starting game with local dev config.");
+                        this.game.setServerOptions(config.local.host, config.local.port, username);
+                    } else {
+                        log.debug("Starting game with default dev config.");
+                        this.game.setServerOptions(config.dev.host, config.dev.port, username);
+                    }
+                    optionsSet = true;
                 }
-                //>>includeEnd("prodHost");
 
                 this.center();
                 this.game.run(function() {
@@ -434,7 +434,8 @@ define(['jquery', 'storage'], function($, Storage) {
                 popupHeight,
                 popupWidth,
                 top,
-                left;
+                left,
+                newwindow;
 
             switch(type) {
                 case 'twitter':
@@ -530,5 +531,5 @@ define(['jquery', 'storage'], function($, Storage) {
         }
     });
 
-    return App;
-});
+export default App;
+

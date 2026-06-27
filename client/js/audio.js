@@ -1,5 +1,7 @@
-
-define(['area'], function(Area) {
+import Area from './area.js';
+import _ from 'underscore';
+import Class from './lib/class.js';
+import log from './lib/log.js';
 
     var AudioManager = Class.extend({
         init: function(game) {
@@ -70,13 +72,14 @@ define(['area'], function(Area) {
                 sound = document.createElement('audio'),
                 self = this;
             
-            sound.addEventListener('canplaythrough', function (e) {
-                this.removeEventListener('canplaythrough', arguments.callee, false);
+            var onCanPlayThrough = function (e) {
+                this.removeEventListener('canplaythrough', onCanPlayThrough, false);
                 log.debug(path + " is ready to play.");
                 if(loaded_callback) {
                     loaded_callback();
                 }
-            }, false);
+            };
+            sound.addEventListener('canplaythrough', onCanPlayThrough, false);
             sound.addEventListener('error', function (e) {
                 log.error("Error: "+ path +" could not be loaded.");
                 self.sounds[name] = null;
@@ -189,7 +192,7 @@ define(['area'], function(Area) {
             if(music && !music.sound.fadingOut) {
                 this.clearFadeIn(music);
                 music.sound.fadingOut = setInterval(function() {
-                    var step = 0.02;
+                    var step = 0.02,
                         volume = music.sound.volume - step;
                 
                     if(self.enabled && volume >= step) {
@@ -208,7 +211,7 @@ define(['area'], function(Area) {
             if(music && !music.sound.fadingIn) {
                 this.clearFadeOut(music);
                 music.sound.fadingIn = setInterval(function() {
-                    var step = 0.01;
+                    var step = 0.01,
                         volume = music.sound.volume + step;
 
                     if(self.enabled && volume < 1 - step) {
@@ -246,5 +249,5 @@ define(['area'], function(Area) {
         }
     });
     
-    return AudioManager;
-});
+export default AudioManager;
+

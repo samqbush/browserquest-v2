@@ -1,5 +1,7 @@
 
-Types = {
+var _ = require('underscore');
+
+var Types = {
     Messages: {
         HELLO: 0,
         WELCOME: 1,

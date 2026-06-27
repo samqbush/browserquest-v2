@@ -1,5 +1,5 @@
-
-define(['character'], function(Character) {
+import Character from './character.js';
+import Types from 'shared/js/gametypes.js';
 
     var NpcTalk = {
         "guard": [
@@ -184,5 +184,5 @@ define(['character'], function(Character) {
         }
     });
     
-    return Npc;
-});
+export default Npc;
+

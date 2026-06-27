@@ -1,5 +1,6 @@
-
-define(['lib/astar'], function(AStar) {
+import AStar from './lib/astar.js';
+import _ from 'underscore';
+import Class from './lib/class.js';
 
     var Pathfinder = Class.extend({
         init: function(width, height) {
@@ -96,5 +97,5 @@ define(['lib/astar'], function(AStar) {
         }
     });
     
-    return Pathfinder;
-});
+export default Pathfinder;
+

@@ -1,5 +1,5 @@
+import Class from './lib/class.js';
 
-define(function() {
     
     var Tile = Class.extend({
     });
@@ -33,5 +33,5 @@ define(function() {
         }
     });
     
-    return AnimatedTile;
-});
+export default AnimatedTile;
+
