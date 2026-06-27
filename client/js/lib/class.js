@@ -54,7 +54,7 @@ Class.extend = function extend(prop) {
     NewClass.prototype = prototype;
     
     // Enforce the constructor to be what we expect
-    NewClass.constructor = NewClass;
+    NewClass.prototype.constructor = NewClass;
     
     // And make this class extendable (ESM strict mode forbids arguments.callee)
     NewClass.extend = extend;

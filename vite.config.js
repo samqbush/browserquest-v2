@@ -34,7 +34,8 @@ function sharedCjsToEsm() {
     name: 'browserquest-shared-cjs-to-esm',
     enforce: 'pre',
     transform(code, id) {
-      if (!id.replace(/\\/g, '/').endsWith('shared/js/gametypes.js')) return null;
+      const normalizedId = id.replace(/\\/g, '/').split('?')[0];
+      if (!normalizedId.endsWith('shared/js/gametypes.js')) return null;
       let out = code.replace(
         /var\s+_\s*=\s*require\(['"]underscore['"]\);?/,
         "import _ from 'underscore';"

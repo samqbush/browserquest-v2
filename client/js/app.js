@@ -452,7 +452,7 @@ import log from './lib/log.js';
             left = (w / 2) - (popupWidth / 2);
 
         	newwindow = window.open(url,'name','height=' + popupHeight + ',width=' + popupWidth + ',top=' + top + ',left=' + left);
-        	if (window.focus) {newwindow.focus()}
+        	if (newwindow && window.focus) {newwindow.focus()}
         },
 
         animateParchment: function(origin, destination) {
