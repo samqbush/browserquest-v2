@@ -35,19 +35,28 @@ module.exports = Player = Character.extend({
         
         this.connection.listen(function(message) {
             var action = parseInt(message[0]);
-            
-            log.debug("Received: "+message);
+
+            // Redact the HELLO bearer token (message[4]) before logging or
+            // echoing the raw message back in a close reason, so credentials
+            // never leak into logs.
+            var redacted = message;
+            if(action === Types.Messages.HELLO && Array.isArray(message) && message.length > 4) {
+                redacted = message.slice();
+                redacted[4] = "[redacted]";
+            }
+
+            log.debug("Received: "+redacted);
             if(!check(message)) {
-                self.connection.close("Invalid "+Types.getMessageTypeAsString(action)+" message format: "+message);
+                self.connection.close("Invalid "+Types.getMessageTypeAsString(action)+" message format: "+redacted);
                 return;
             }
             
             if(!self.hasEnteredGame && action !== Types.Messages.HELLO) { // HELLO must be the first message
-                self.connection.close("Invalid handshake message: "+message);
+                self.connection.close("Invalid handshake message: "+redacted);
                 return;
             }
             if(self.hasEnteredGame && !self.isDead && action === Types.Messages.HELLO) { // HELLO can be sent only once
-                self.connection.close("Cannot initiate handshake twice: "+message);
+                self.connection.close("Cannot initiate handshake twice: "+redacted);
                 return;
             }
             
@@ -513,8 +522,9 @@ module.exports = Player = Character.extend({
         }
     },
 
-    // Debounced save for high-frequency events (movement), coalescing writes so
-    // they never run on the per-tick hot path.
+    // Throttled save for high-frequency events (movement): a save is scheduled
+    // only when none is already pending, coalescing writes so they never run on
+    // the per-tick hot path.
     scheduleSave: function() {
         var self = this;
         if(!this.store || !this.token || this.saveTimeout) {
