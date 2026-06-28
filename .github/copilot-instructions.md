@@ -24,11 +24,12 @@ remote.
 | Watch tests | `npm run test:watch` |
 | E2E smoke test | `npm run test:e2e` (Playwright; builds client + boots server) |
 | Lint | `npm run lint` |
+| Typecheck (protocol surface) | `npm run typecheck` (tsc --noEmit) |
 | Format / check | `npm run format` / `npm run format:check` |
 | Circular-dep check | `npm run madge` (client only) |
 
-CI (`.github/workflows/ci.yml`) runs lint → test → madge, plus a separate
-build + E2E smoke job, on Node 22 for every push and PR.
+CI (`.github/workflows/ci.yml`) runs lint → typecheck → test → madge, plus a
+separate build + E2E smoke job, on Node 22 for every push and PR.
 
 These instruction commands must be updated if new long term commands are decided on.  This must be verified with the user during a planning session.
 

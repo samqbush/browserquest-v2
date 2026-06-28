@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "madge": "madge --circular client/js"
@@ -30,10 +31,12 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.61.1",
+    "@types/node": "^26.0.1",
     "eslint": "^10.6.0",
     "globals": "^17.7.0",
     "madge": "^8.0.0",
     "prettier": "^3.8.5",
+    "typescript": "^5.9.3",
     "vite": "^7.3.6",
     "vitest": "^4.1.9"
   }

@@ -438,21 +438,55 @@ smoke test green in CI alongside the existing Vitest suite.
 
 ---
 
-## Phase 5: Optional TypeScript & DX polish (T-shirt size: M)
+## Phase 5: Optional TypeScript & DX polish (T-shirt size: M) — ✅ COMPLETE
 
 **Goal:** Type the protocol and core modules incrementally.
 **Prerequisites:** Phases 1-2.
 **Duration estimate:** 1-3 sprints, opportunistic.
+**Status:** Complete. Protocol surface type-checked end to end via JSDoc +
+`checkJs` + a hand-authored ambient `.d.ts`; `npm run typecheck` is a required
+CI gate. Verified on TypeScript 5.9.
+
+### Decisions made (resolving the §7 `[DECISION NEEDED]` flag)
+- **Strategy:** **JSDoc + `checkJs` + ambient `.d.ts`** — NOT a `.ts`
+  conversion. No file renames, no runtime/build changes; `tsc --noEmit` is a
+  pure static gate, so the shipped JS bytes are byte-for-byte unchanged. This
+  respects the dual-runtime constraint of `shared/js/gametypes.js` (CommonJS on
+  disk for the Node server + Vitest, rewritten to ESM in-memory by the Vite
+  plugin for the client) and the "cheapest migration" principle.
+- **Scope:** **Protocol surface only** — `shared/js/gametypes.js`,
+  `server/js/message.js`, `server/js/format.js`. This satisfies the DoD with the
+  smallest, cleanest gate and minimal legacy-error noise. Typing
+  `worldserver.js`/`player.js` (original task 5.3) was **descoped** to keep the
+  gate green and noise-free; it can be picked up opportunistically later.
+- **Type source of truth:** a colocated `shared/js/gametypes.d.ts` (literal
+  message/entity/orientation codes + helper signatures, `export = Types` /
+  `export as namespace Types`) is auto-discovered for both the server `require`
+  and the client `import` — one declaration consumed by both sides (task 5.2).
+- **Legacy globals:** `types/legacy-globals.d.ts` declares the leaked
+  `Class`/`FormatChecker`/`log` globals; `server/js/lib/class.d.ts` shadows the
+  un-typeable John-Resig shim so `tsc` doesn't descend into it. CommonJS globals
+  come from `@types/node`.
+- **Strictness:** pragmatic legacy baseline (`strict:false` +
+  `strictNullChecks:true`), not full `strict`, to avoid `this`/global noise on
+  the 2012 inheritance pattern. Proven green locally before the CI gate landed.
 
 ### Tasks
-| ID | Task | Component | Blocked by |
-|----|------|-----------|------------|
-| 5.1 | Add TS + `allowJs`; type `shared/gametypes.js` first (protocol) | shared | — |
-| 5.2 | Generate shared protocol types consumed by client+server | shared | 5.1 |
-| 5.3 | Type `worldserver.js`/`player.js` incrementally | server | 5.1 |
+| ID | Task | Component | Status |
+|----|------|-----------|--------|
+| 5.1 | Add TS + `allowJs`/`checkJs`; type `shared/gametypes.js` first (protocol) via ambient `.d.ts` | shared | ✅ |
+| 5.2 | Shared protocol types (`gametypes.d.ts`) consumed by both client & server | shared | ✅ |
+| 5.3 | Type `worldserver.js`/`player.js` incrementally | server | ⏭️ Descoped (protocol-only scope) |
 
 ### Verification & exit criteria (Definition of Done)
-- [ ] Protocol is type-checked end to end; build stays green.
+- [x] Protocol is type-checked end to end (`gametypes.js` + `message.js` +
+      `format.js` against `gametypes.d.ts`); `npm run typecheck` passes with no
+      emit. Negative test confirmed the gate fails on a bogus protocol code.
+- [x] `npm run lint` (0 errors), `npm test` (86 tests incl.
+      `test/transport-contract.test.js`, `test/protocol-codes.test.js`), and
+      `npm run madge` green; `npm run test:e2e` green — confirms the
+      comment-only changes did not alter the wire protocol. Runtime JS
+      unchanged (no `.ts` files, no build-output change).
 
 ---
 
@@ -484,8 +518,9 @@ smoke test green in CI alongside the existing Vitest suite.
   file-based, zero-infra) — chosen over Redis/Postgres for the single-host demo.
 - ✅ **RESOLVED (Phase 4)** **Accounts/auth:** anonymous opaque bearer tokens
   (no real accounts); anonymous play remains the default.
-- `[DECISION NEEDED]` **TypeScript:** adopt incrementally (Phase 5) or stay JS +
-  JSDoc?
+- ✅ **RESOLVED (Phase 5)** **TypeScript:** adopt types via **JSDoc + `checkJs`
+  + ambient `.d.ts`** (no `.ts` conversion, no runtime/build change), scoped to
+  the protocol surface. `npm run typecheck` is a required CI gate.
 - `[DECISION NEEDED]` **Multi-host topology:** is the `game_servers` memcached
   fan-out (`metrics.js:31,40`) still a target, or is single-host sufficient? This
   decides whether Phase 3.4 (Redis) is needed. (The Phase 4 SQLite store and

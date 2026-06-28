@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
+    "strictNullChecks": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "target": "es2020",
+    "types": ["node"]
+  },
+  "include": [
+    "types/legacy-globals.d.ts",
+    "shared/js/gametypes.js",
+    "shared/js/gametypes.d.ts",
+    "server/js/message.js",
+    "server/js/format.js"
+  ]
+}

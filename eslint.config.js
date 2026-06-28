@@ -29,6 +29,9 @@ module.exports = [
       'client/js/build.js',
       'tools/**',
       '**/*.min.js',
+      // TypeScript ambient declarations (Phase 5): espree cannot parse .d.ts
+      // syntax (declare/export =). Type-checking is handled by `tsc`, not lint.
+      '**/*.d.ts',
     ],
   },
 
