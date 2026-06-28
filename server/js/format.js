@@ -1,4 +1,5 @@
 
+// @ts-check
 var Types = require("../../shared/js/gametypes");
 
 (function() {

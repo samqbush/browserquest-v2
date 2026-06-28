@@ -1,4 +1,5 @@
 
+// @ts-check
 var cls = require("./lib/class"),
     Utils = require("./utils"),
     Types = require("../../shared/js/gametypes");
